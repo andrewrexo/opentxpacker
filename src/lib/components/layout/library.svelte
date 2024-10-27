@@ -10,7 +10,7 @@
 				class="bigger-button btn btn-neutral btn-sm transition-all hover:translate-y-[-1px]"
 				aria-label="Project Settings"
 			>
-				<span class="h-5">
+				<span class="h-5 w-5">
 					<iconify-icon icon="line-md:uploading-loop" height="1.25rem" width="1.25rem"
 					></iconify-icon>
 				</span>
