@@ -17,6 +17,7 @@
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@types/eslint": "^9.6.0",
+		"@types/lodash": "^4.17.12",
 		"autoprefixer": "^10.4.20",
 		"daisyui": "^4.12.13",
 		"eslint": "^9.7.0",
@@ -35,6 +36,7 @@
 	},
 	"dependencies": {
 		"iconify-icon": "^2.1.0",
+		"lodash": "^4.17.21",
 		"phaser": "^3.86.0"
 	}
 }

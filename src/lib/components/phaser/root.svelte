@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Game } from 'phaser';
+	import { debounce } from 'lodash';
 	import config from '$lib/phaser/config';
 
 	let game: Game;
@@ -15,13 +16,16 @@
 		game.scale.resize(window.innerWidth - leftSidebar - rightSidebar, window.innerHeight);
 	};
 
+	const debouncedResize = debounce(resizeGame, 250);
+
 	$effect(() => {
 		if (!game) {
 			game = StartGame('canvas-container');
-			window.addEventListener('resize', resizeGame);
+			window.addEventListener('resize', debouncedResize);
 		}
 		return () => {
-			window.removeEventListener('resize', resizeGame);
+			window.removeEventListener('resize', debouncedResize);
+			debouncedResize.cancel();
 		};
 	});
 </script>

@@ -9,8 +9,8 @@
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
 </script>
 
-<header class="flex items-center justify-between pb-4">
-	<h1 class="panel-header">Project Settings</h1>
+<header class="flex items-center justify-between pb-2">
+	<h1 class="text-lg font-bold">Configuration</h1>
 </header>
 
 <div class="form-control h-[calc(100%-3rem)]">
@@ -28,4 +28,16 @@
 			Export
 		</ButtonItem>
 	</div>
+	<span class="mx-auto pt-4 text-center text-xs text-base-content/50">
+		beta version 0.1.0.
+		<br />
+		contact:
+		<a
+			href="mailto:andrew@rubes.dev"
+			target="_blank"
+			class="link brightness-125 hover:text-secondary"
+		>
+			andrew@rubes.dev
+		</a>
+	</span>
 </div>
