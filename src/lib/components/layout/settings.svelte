@@ -1,46 +1,31 @@
 <script>
+	import Select from '$lib/components/ui/select.svelte';
+	import ButtonItem from '../button-item.svelte';
+
 	let exportFormat = $state('Phaser 3');
+	let textureFormat = $state('PNG-32');
+
+	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
+	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
 </script>
 
-<header class="flex items-center justify-between pb-2">
+<header class="flex items-center justify-between pb-4">
 	<h1 class="panel-header">Project Settings</h1>
 </header>
+
 <div class="form-control h-[calc(100%-3rem)]">
-	<label class="label" for="exportFormat">
-		<span class="label-text">Export Format</span>
-	</label>
-	<select
-		id="exportFormat"
-		bind:value={exportFormat}
-		class="select select-bordered select-sm w-full"
-	>
-		<option>Phaser 3</option>
-		<option>Multiatlas</option>
-		<option>JSON</option>
-	</select>
+	<div class="grid grid-cols-1 gap-2">
+		<Select label="Texture Type" options={exportOptions} bind:value={exportFormat} />
+		<Select label="File Format" options={textureOptions} bind:value={textureFormat} />
+	</div>
 
-	<label class="label mt-2" for="textureFormat">
-		<span class="label-text">Texture Format</span>
-	</label>
-	<select id="textureFormat" class="select select-bordered select-sm w-full">
-		<option>PNG-32</option>
-		<option>PNG-8</option>
-		<option>WebP</option>
-	</select>
-
-	<div class="mt-auto grid grid-cols-2 gap-4 pt-4">
-		<button class="bigger-button btn btn-neutral justify-between hover:translate-y-[-1px]">
-			Modify
+	<div class="mt-auto grid grid-cols-1 gap-2 pt-4">
+		<ButtonItem caret className="bigger-button">
 			<span class="h-5 w-5">
-				<iconify-icon icon="mdi:design" height="1.25rem" width="1.25rem"></iconify-icon>
-			</span>
-		</button>
-		<button class="bigger-button btn btn-neutral justify-between hover:translate-y-[-1px]">
-			Export
-			<span class="h-5 w-5">
-				<iconify-icon icon="streamline:download-box-1-solid" height="1.25rem" width="1.25rem"
+				<iconify-icon icon="line-md:file-export-filled" height="1.25rem" width="1.25rem"
 				></iconify-icon>
 			</span>
-		</button>
+			Export
+		</ButtonItem>
 	</div>
 </div>
