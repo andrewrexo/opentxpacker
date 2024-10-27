@@ -7,7 +7,7 @@
 
 <div class="flex h-screen bg-base-200">
 	<!-- Left Sidebar -->
-	<div class="w-64 border-r border-base-300 bg-base-100 p-4">
+	<div class="w-64 min-w-64 border-r border-base-300 bg-base-100 p-4">
 		<header class="flex flex-col gap-2 pb-4">
 			<h1 class="panel-header">New Project</h1>
 			<span class="text-sm text-base-content/70">
@@ -23,12 +23,12 @@
 	</div>
 
 	<!-- Main Content Area -->
-	<div class="flex-1">
+	<div class="w-full">
 		<Canvas />
 	</div>
 
 	<!-- Right Settings Panel -->
-	<div class="w-72 border-l border-base-300 bg-base-100 p-4">
+	<div class="w-64 min-w-64 border-l border-base-300 bg-base-100 p-4">
 		<Settings />
 	</div>
 </div>
