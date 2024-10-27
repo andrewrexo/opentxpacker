@@ -9,3 +9,7 @@
 .bigger-button {
 	font-size: 1rem;
 }
+
+.code-snippet {
+	@apply rounded-sm bg-base-300 px-1;
+}
