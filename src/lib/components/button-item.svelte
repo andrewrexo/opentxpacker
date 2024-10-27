@@ -22,16 +22,30 @@
 
 <div class="flex items-center gap-2">
 	<button
-		class="btn btn-neutral btn-sm flex-1 flex-row-reverse justify-between transition-transform hover:translate-x-[1px] {className}"
+		class="btn flex-1 flex-row-reverse items-center justify-between transition-transform hover:text-primary {className}"
 		onmouseenter={onMouseEnter}
 		onmouseleave={onMouseLeave}
 	>
 		{@render children()}
 		{#if caret}
-			<label for="swap-icon" class="swap {isHovered ? 'swap-active' : ''}">
-				<iconify-icon icon="eva:diagonal-arrow-right-up-fill" class="swap-on"></iconify-icon>
-				<iconify-icon icon="ph:caret-right-bold" class="swap-off"></iconify-icon>
-			</label>
+			<span class="h-4 w-4">
+				<label for="swap-icon" class="swap {isHovered ? 'swap-active' : ''}">
+					<iconify-icon
+						icon="eva:diagonal-arrow-right-up-fill"
+						class="swap-on"
+						height="1rem"
+						width="1rem"
+					></iconify-icon>
+					<iconify-icon icon="ph:caret-right-bold" class="swap-off" height="1rem" width="1rem"
+					></iconify-icon>
+				</label>
+			</span>
 		{/if}
 	</button>
 </div>
+
+<style lang="postcss">
+	.swap-on {
+		@apply text-primary;
+	}
+</style>

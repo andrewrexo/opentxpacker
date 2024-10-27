@@ -8,17 +8,22 @@
 <div class="flex h-screen bg-base-200">
 	<!-- Left Sidebar -->
 	<div class="w-64 border-r border-base-300 bg-base-100 p-4">
-		<header class="flex items-center justify-between pb-4">
-			<h1 class="panel-header flex items-center gap-3">New Project</h1>
+		<header class="flex flex-col gap-2 pb-4">
+			<h1 class="panel-header">New Project</h1>
+			<span class="text-sm text-base-content/70">
+				Get started with <code class="code-snippet">opentxpacker</code>. Import your textures and
+				let us handle the rest.
+			</span>
 		</header>
-		<div class="flex flex-col gap-8">
+		<div class="flex flex-col gap-2">
 			<Greet />
+			<div class="divider my-0 pb-4 pt-6"></div>
 			<Library />
 		</div>
 	</div>
 
 	<!-- Main Content Area -->
-	<div class="flex-1 p-4">
+	<div class="flex-1">
 		<Canvas />
 	</div>
 

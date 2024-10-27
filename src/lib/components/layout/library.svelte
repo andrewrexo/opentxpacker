@@ -7,24 +7,22 @@
 		<div class="flex items-center justify-between">
 			<h1 class="panel-header">Library</h1>
 			<button
-				class="bigger-button btn btn-neutral btn-sm transition-all hover:translate-y-[-1px]"
+				class="bigger-button btn btn-ghost btn-sm mt-1 text-primary transition-all hover:bg-neutral"
 				aria-label="Project Settings"
 			>
-				<span class="h-5 w-5">
-					<iconify-icon icon="line-md:uploading-loop" height="1.25rem" width="1.25rem"
-					></iconify-icon>
+				<span class="h-4 w-4">
+					<iconify-icon icon="line-md:uploading-loop" height="1rem" width="1rem"></iconify-icon>
 				</span>
 				Upload
 			</button>
 		</div>
 		<p class="text-sm text-base-content/70">
-			Your library is the home for all of your uploaded assets.
+			You'll find all of your uploaded textures here. Select a file to highlight it in the canvas.
 		</p>
 	</div>
 {/snippet}
 
-<div class="flex flex-col gap-1">
+<div class="flex flex-col gap-4">
 	{@render PanelHeader()}
-	<div class="divider my-1"></div>
 	<FileTree />
 </div>
