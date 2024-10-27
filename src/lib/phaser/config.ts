@@ -1,5 +1,6 @@
 import { AUTO } from 'phaser';
-import { Boot } from './scenes/boot';
+import { BootScene } from './scenes/boot';
+import LoadScene from './scenes/load';
 
 const config: Phaser.Types.Core.GameConfig = {
 	type: AUTO,
@@ -11,8 +12,8 @@ const config: Phaser.Types.Core.GameConfig = {
 		autoRound: true,
 	},
 	disableContextMenu: true,
-  transparent: true,
-	scene: [Boot],
+	transparent: true,
+	scene: [BootScene, LoadScene],
 	render: {
 		powerPreference: 'high-performance',
 		pixelArt: true,

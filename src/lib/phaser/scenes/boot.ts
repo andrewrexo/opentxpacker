@@ -1,7 +1,11 @@
 import { Scene } from 'phaser';
 
-export class Boot extends Scene {
+export class BootScene extends Scene {
+	constructor() {
+		super({ key: 'boot' });
+	}
+
 	create() {
-		this.add.text(100, 100, 'Hello World');
+		this.scene.start('load');
 	}
 }
