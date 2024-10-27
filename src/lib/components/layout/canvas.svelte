@@ -1,15 +1,15 @@
 <script>
-	let zoom = $state(100);
+	import PhaserWrapper from '../phaser/wrapper.svelte';
+	import ZoomControl from '../zoom-control.svelte';
 </script>
 
-<div class="relative h-full rounded-lg bg-base-300">
-	<div
-		class="absolute inset-0 h-full w-full bg-base-300 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"
-	></div>
-	<div class="absolute bottom-4 left-4 flex items-center gap-2">
-		<button class="btn btn-circle btn-sm">-</button>
-		<input type="range" class="range range-sm w-32" min="10" max="200" bind:value={zoom} />
-		<button class="btn btn-circle btn-sm">+</button>
-		<span class="text-sm">{zoom}%</span>
+<div class="relative h-full w-full rounded-lg bg-base-300">
+	<div class="grid-lines absolute inset-0"></div>
+	<div class="h-full w-full">
+		<PhaserWrapper />
 	</div>
+	<div class="absolute bottom-4 left-4 flex items-center gap-2">
+		<ZoomControl />
+	</div>
+	<p class="absolute left-4 top-4 z-10 text-sm">interactable action text</p>
 </div>

@@ -54,7 +54,7 @@
 			<button
 				type="button"
 				onclick={() => handleSelect(option)}
-				class="relative w-full cursor-pointer select-none px-4 py-2 text-left hover:bg-base-300 {selected ===
+				class="relative flex w-full cursor-pointer select-none items-center justify-between px-4 py-2 text-left hover:bg-base-300 {selected ===
 				option
 					? 'bg-primary/10 text-primary'
 					: ''}"
@@ -63,9 +63,7 @@
 					{option}
 				</span>
 				{#if selected === option}
-					<span class="absolute inset-y-0 right-0 flex h-5 w-5 items-center pr-3 text-primary">
-						<iconify-icon icon="heroicons:check-20-solid"></iconify-icon>
-					</span>
+					<iconify-icon icon="heroicons:check-20-solid"></iconify-icon>
 				{/if}
 			</button>
 		{/each}

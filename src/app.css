@@ -3,7 +3,7 @@
 @import 'tailwindcss/utilities';
 
 .panel-header {
-	@apply text-2xl font-bold;
+	@apply text-xl font-bold;
 }
 
 .bigger-button {
@@ -12,4 +12,12 @@
 
 .code-snippet {
 	@apply rounded-sm bg-base-300 px-1;
+}
+
+.grid-lines {
+	@apply absolute inset-0 z-10 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px];
+}
+
+canvas {
+	@apply bg-base-300;
 }
