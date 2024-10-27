@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	interface ButtonItemProps {
+	interface ButtonProps {
 		children: Snippet;
 		caret?: boolean;
 		className?: string;
 	}
 
-	let { children, caret = false, className }: ButtonItemProps = $props();
+	let { children, caret = false, className }: ButtonProps = $props();
 
 	let isHovered = $state(false);
 

@@ -1,6 +1,6 @@
 <script>
 	import Select from '$lib/components/ui/select.svelte';
-	import ButtonItem from '../button-item.svelte';
+	import Button from '../ui/button.svelte';
 
 	let exportFormat = $state('Phaser 3');
 	let textureFormat = $state('PNG-32');
@@ -20,13 +20,13 @@
 	</div>
 
 	<div class="mt-auto grid grid-cols-1 gap-2 pt-4">
-		<ButtonItem caret className="bigger-button">
+		<Button caret className="bigger-button">
 			<span class="h-5 w-5">
 				<iconify-icon icon="line-md:file-export-filled" height="1.25rem" width="1.25rem"
 				></iconify-icon>
 			</span>
 			Export
-		</ButtonItem>
+		</Button>
 	</div>
 	<span class="mx-auto pt-4 text-center text-xs text-base-content/50">
 		beta version 0.1.0.
