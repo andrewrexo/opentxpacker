@@ -1,7 +1,7 @@
 <script>
 	import { fly } from 'svelte/transition';
 	import Greet from './greet.svelte';
-	import Button from '../ui/button.svelte';
+	import Button from '../primitives/button.svelte';
 
 	let mounted = $state(false);
 

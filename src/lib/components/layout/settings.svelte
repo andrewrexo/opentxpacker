@@ -1,6 +1,6 @@
 <script>
-	import Select from '$lib/components/ui/select.svelte';
-	import Button from '../ui/button.svelte';
+	import Select from '$lib/components/primitives/select.svelte';
+	import Button from '../primitives/button.svelte';
 
 	let exportFormat = $state('Phaser 3');
 	let textureFormat = $state('PNG-32');

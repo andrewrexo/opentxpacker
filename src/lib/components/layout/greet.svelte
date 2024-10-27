@@ -1,5 +1,5 @@
 <script>
-	import Button from '../ui/button.svelte';
+	import Button from '../primitives/button.svelte';
 </script>
 
 <Button caret className="bigger-button">
