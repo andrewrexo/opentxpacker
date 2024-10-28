@@ -17,18 +17,16 @@
 	<div class="flex h-full w-64 min-w-64 flex-col gap-2 border-r border-base-300 bg-base-100 p-4">
 		{#if mounted}
 			<div in:fly={{ y: -100, duration: 500 }}>
-				<header class="flex flex-col gap-2">
-					<div class="flex h-14 min-h-14 items-center justify-center">
-						<img
-							src="/logo.png"
-							class="h-full w-full rounded-lg bg-base-200 object-contain p-4"
-							alt="opentxpacker"
-						/>
-					</div>
-				</header>
+				<div class="min-h-10 px-1 py-2">
+					<img
+						src="/logo.png"
+						class="h-full w-full rounded-lg object-contain pb-1"
+						alt="opentxpacker"
+					/>
+				</div>
+				<div class="divider my-0"></div>
 			</div>
 		{/if}
-		<div class="divider my-1 mb-0"></div>
 		<Library />
 		<div class="mt-auto flex flex-col gap-4">
 			<Greet />
