@@ -1,9 +1,9 @@
 <script lang="ts">
-	let assets = $state(['image.png', 'image2.png', 'image3.png']);
+	import fileState from '$lib/state/file.svelte';
 </script>
 
 <!-- svelte-ignore a11y_missing_attribute -->
-<ul class="menu menu-xs w-full max-w-xs rounded-lg bg-base-200">
+<ul class="menu menu-sm w-full max-w-xs rounded-lg bg-base-200">
 	<li>
 		<details open>
 			<summary>
@@ -24,16 +24,16 @@
 				assets
 			</summary>
 			<ul class="menu-content">
-				{#each assets as asset}
+				{#each fileState.assets as asset}
 					<li class="text-right">
-						<a>
+						<a aria-label={asset}>
 							<iconify-icon
 								icon="material-symbols:image-outline"
 								width="1rem"
 								height="1rem"
 								class="h-4 w-4"
 							></iconify-icon>
-							{asset}
+							<span class="max-w-[8rem] truncate">{asset}</span>
 						</a>
 					</li>
 				{/each}
