@@ -1,6 +1,5 @@
 <script lang="ts">
 	import fileState from '$lib/state/file.svelte';
-	import Page from '../../../routes/+page.svelte';
 
 	let fileInput: HTMLInputElement | null = null;
 	let EventBus: Phaser.Events.EventEmitter | null = $state(null);
@@ -28,7 +27,7 @@
 		if (!e.dataTransfer?.files) return;
 
 		try {
-			await handleFiles(Array.from(e.dataTransfer.files));
+			handleFiles(e.dataTransfer.files);
 		} catch (error) {
 			console.error('Failed to upload files:', error);
 		}
