@@ -16,16 +16,13 @@
 		game.scale.resize(window.innerWidth - leftSidebar - rightSidebar, window.innerHeight);
 	};
 
-	const debouncedResize = debounce(resizeGame, 250);
-
 	$effect(() => {
 		if (!game) {
 			game = StartGame('canvas-container');
-			window.addEventListener('resize', debouncedResize);
+			window.addEventListener('resize', resizeGame);
 		}
 		return () => {
-			window.removeEventListener('resize', debouncedResize);
-			debouncedResize.cancel();
+			window.removeEventListener('resize', resizeGame);
 		};
 	});
 </script>
