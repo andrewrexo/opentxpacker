@@ -1,29 +1,32 @@
 <script lang="ts">
-	import { Game } from 'phaser';
-	import { debounce } from 'lodash';
-	import config from '$lib/phaser/config';
-
-	let game: Game;
-
-	const StartGame = (parent: string) => {
-		return new Game({ ...config, parent });
-	};
+	import phaserState from '$lib/state/phaser.svelte';
 
 	// this should be dynamic based on the sidebar sizes. not a great solution atm
-	const resizeGame = () => {
+	const resizePhaser = () => {
+		if (!phaserState.phaser) return;
+
 		const leftSidebar = 256; // 64rem
 		const rightSidebar = 256; // 72rem
-		game.scale.resize(window.innerWidth - leftSidebar - rightSidebar, window.innerHeight);
+		phaserState.phaser.scale.resize(
+			window.innerWidth - leftSidebar - rightSidebar,
+			window.innerHeight
+		);
 	};
 
 	$effect(() => {
-		if (!game) {
-			game = StartGame('canvas-container');
-			window.addEventListener('resize', resizeGame);
+		if (!phaserState.phaser) {
+			window.addEventListener('resize', resizePhaser);
 		}
+
 		return () => {
-			window.removeEventListener('resize', resizeGame);
+			window.removeEventListener('resize', resizePhaser);
 		};
+	});
+
+	$effect(() => {
+		if (phaserState.phaser) return;
+
+		phaserState.startPhaser();
 	});
 </script>
 

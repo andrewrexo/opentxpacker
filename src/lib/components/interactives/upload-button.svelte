@@ -1,15 +1,9 @@
 <script lang="ts">
+	import { EventBus } from '$lib/phaser/event-bus';
 	import fileState from '$lib/state/file.svelte';
 
 	let fileInput: HTMLInputElement | null = null;
-	let EventBus: Phaser.Events.EventEmitter | null = $state(null);
 	let dragOver = $state(false);
-
-	$effect(() => {
-		import('$lib/phaser/event-bus').then((module) => {
-			EventBus = module.EventBus;
-		});
-	});
 
 	const handleDragOver = (e: DragEvent) => {
 		e.preventDefault();
@@ -41,7 +35,6 @@
 			reader.onload = (e) => {
 				const img = new Image();
 				img.onload = () => {
-					if (!EventBus) return;
 					EventBus.emit('SPRITE_UPLOADED', {
 						name: file.name,
 						width: img.width,
