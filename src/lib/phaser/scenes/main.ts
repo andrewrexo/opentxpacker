@@ -18,6 +18,7 @@ export default class MainScene extends Scene {
 	private cameraSpeed = 10;
 	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 	private centerPoint!: Phaser.Math.Vector2;
+	private currentHighlight?: Phaser.GameObjects.Rectangle;
 
 	constructor() {
 		super({ key: 'main' });
@@ -99,6 +100,28 @@ export default class MainScene extends Scene {
 					image.src = url;
 				}
 			});
+		});
+
+		EventBus.on('hoverTextureFileTree', (name: string | null) => {
+			if (name) {
+				const sprite = this.sprites.get(name);
+				if (sprite) {
+					this.currentHighlight?.destroy();
+					this.currentHighlight = this.add.rectangle(
+						sprite.x,
+						sprite.y,
+						sprite.width,
+						sprite.height,
+						0x00ff00,
+						0.3
+					);
+					this.currentHighlight.setOrigin(0, 0);
+					this.currentHighlight.setStrokeStyle(2, 0x00ff00);
+				}
+			} else {
+				this.currentHighlight?.destroy();
+				this.currentHighlight = undefined;
+			}
 		});
 	}
 

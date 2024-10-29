@@ -14,6 +14,14 @@
 		}
 	};
 
+	const handleMouseEnter = (name: string) => {
+		EventBus.emit('hoverTextureFileTree', name);
+	};
+
+	const handleMouseLeave = () => {
+		EventBus.emit('hoverTextureFileTree', null);
+	};
+
 	EventBus.on('textureLoaded', handleTextureLoaded);
 	EventBus.on('uploadResult', handleUploadResult);
 </script>
@@ -39,9 +47,13 @@
 					</svg>
 					assets
 				</summary>
-				<ul class="menu-content max-h-[calc(100vh-30rem)] overflow-y-auto">
+				<ul class="menu-content max-h-[calc(100vh-33rem)] overflow-y-auto">
 					{#each fileState.assets as asset}
-						<li class="text-right">
+						<li
+							class="text-right"
+							onmouseenter={() => handleMouseEnter(asset.name)}
+							onmouseleave={() => handleMouseLeave()}
+						>
 							<a
 								aria-label={asset.name}
 								class:opacity-50={!loadedTextures.has(asset.name)}

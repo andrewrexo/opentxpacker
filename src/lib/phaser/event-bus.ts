@@ -14,6 +14,7 @@ type EventMap = {
 	textureLoaded: (textureName: string) => void;
 	uploadResult: (result: UploadResult) => void;
 	adjustZoom: (value: number) => void;
+	hoverTextureFileTree: (textureName: string) => void;
 };
 
 type EventTypes = keyof EventMap;
