@@ -28,7 +28,7 @@
 			</div>
 		{/if}
 		<Library />
-		<div class="mb-4 mt-auto flex flex-col gap-4">
+		<div class="mb-0 mt-auto flex flex-col gap-4">
 			<Greet />
 		</div>
 	</div>

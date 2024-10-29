@@ -12,9 +12,9 @@
 </script>
 
 {#snippet PanelHeader()}
-	<div class="flex h-full flex-col gap-1">
+	<div class="flex h-full flex-col gap-4">
 		<h2 class="text-lg font-bold">Library</h2>
-		<span class="pb-4 text-xs text-base-content/50">
+		<span class="text-sm text-base-content/50">
 			You'll find all of your project's assets here. Select an asset from the file tree to show it's
 			position in the canvas.
 		</span>

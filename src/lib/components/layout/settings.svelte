@@ -13,13 +13,13 @@
 	<h1 class="text-lg font-bold">Configuration</h1>
 </header>
 
-<div class="form-control h-[calc(100%-3rem)]">
-	<div class="grid grid-cols-1 gap-2">
+<div class="form-control h-[calc(100%-2rem)]">
+	<div class="grid grid-cols-1 gap-2 pb-4">
 		<Select label="Texture Type" options={exportOptions} bind:value={exportFormat} />
 		<Select label="File Format" options={textureOptions} bind:value={textureFormat} />
 	</div>
 
-	<div class="mt-auto grid grid-cols-1 gap-2 pt-4">
+	<div class="mt-auto grid grid-cols-1 gap-2">
 		<Button caret className="bigger-button">
 			<span class="h-5 w-5">
 				<iconify-icon icon="line-md:file-export-filled" height="1.25rem" width="1.25rem"
