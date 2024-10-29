@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { EventBus } from '$lib/phaser/event-bus';
 	import fileState from '$lib/state/file.svelte';
 
 	let fileInput: HTMLInputElement | null = null;
@@ -34,14 +33,6 @@
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				const img = new Image();
-				img.onload = () => {
-					EventBus.emit('SPRITE_UPLOADED', {
-						name: file.name,
-						width: img.width,
-						height: img.height,
-						data: e.target?.result
-					});
-				};
 				img.src = e.target?.result as string;
 			};
 			reader.readAsDataURL(file);
