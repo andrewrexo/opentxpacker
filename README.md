@@ -1,38 +1,73 @@
-# create-svelte
+# ![OpenTXPacker](/static/logo.png)
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+An open-source texture atlas packer built with Svelte 5 and Phaser 3. OpenTXPacker provides a modern, efficient alternative to TexturePacker for combining multiple textures into optimized sprite atlases.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 🎨 Upload and combine thousands of textures into one atlas
+- 📦 Efficient texture atlas packing algorithm - faster than TexturePacker!
+- 🔍 Real-time preview with camera controls
+- 💾 Multiple export formats (Phaser 3, Multiatlas, JSON)
+- 🖼️ Support for various image formats (PNG-32, PNG-8, WebP)
+- 🎮 Built with game development in mind
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Getting Started
+### Prerequisites
 
-# create a new project in my-app
-npx sv create my-app
-```
+- bun `curl -fsSL https://bun.sh/install | bash`
 
-## Developing
+### Installation
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. Clone the repository:
 
-```bash
-npm run dev
+   ```
+   git clone https://github.com/andrewrexo/opentxpacker.git
+   cd opentxpacker
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+2. Install dependencies:
 
-## Building
+   ```
+   bun install
+   ```
 
-To create a production version of your app:
+3. Start the development server:
 
-```bash
-npm run build
-```
+   ```
+   bun dev
+   ```
 
-You can preview the production build with `npm run preview`.
+4. Open your browser and navigate to `http://localhost:5173`
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Usage
+
+1. Open the application in your browser
+2. Upload textures by clicking the "Upload" button or dragging and dropping files
+3. Configure export settings (format, compression, etc.)
+4. Export your texture atlas!
+
+## Technology Stack
+
+- [Svelte 5](https://svelte.dev) - Frontend framework with runes
+- [Phaser 3](https://phaser.io) - Canvas rendering and texture management
+- [TailwindCSS](https://tailwindcss.com) - Styling
+- [DaisyUI](https://daisyui.com) - UI components
+- [TypeScript](https://www.typescriptlang.org) - Type safety and DX boosts
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a PR. I'll review it as soon as I can!
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Inspired by [TexturePacker](https://www.codeandweb.com/texturepacker). Even though this project _may_ have been started out of spite it still wouldn't have been possible without them.
