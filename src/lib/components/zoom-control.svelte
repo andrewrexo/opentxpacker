@@ -18,7 +18,20 @@
 	eventBus.on('adjustZoom', (value: number) => {
 		zoom = value;
 	});
+
+	const handleKeyDown = (event: KeyboardEvent) => {
+		switch (event.key) {
+			case '=':
+				zoomIn();
+				break;
+			case '-':
+				zoomOut();
+				break;
+		}
+	};
 </script>
+
+<svelte:window on:keydown={handleKeyDown} />
 
 <div class="z-10 flex items-center gap-2 rounded-full bg-base-200 p-2">
 	<button class="btn btn-circle btn-sm" onclick={zoomOut}>-</button>
