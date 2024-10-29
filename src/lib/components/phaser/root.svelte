@@ -26,4 +26,8 @@
 	});
 </script>
 
-<div id="canvas-container" class="max-w-full overflow-hidden"></div>
+<div
+	id="canvas-container"
+	class="relative z-10 max-w-full overflow-hidden"
+	style="pointer-events: auto;"
+></div>

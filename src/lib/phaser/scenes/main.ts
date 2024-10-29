@@ -76,9 +76,21 @@ export default class MainScene extends Scene {
 								const sprite = this.add.sprite(position.x, position.y, name);
 								sprite.setOrigin(0, 0);
 								sprite.setInteractive();
+
+								sprite.on('pointerover', () => {
+									this.highlightSprite(name);
+									this.game.canvas.style.cursor = 'pointer';
+									EventBus.emit('hoverTextureCanvas', name);
+								});
+
+								sprite.on('pointerout', () => {
+									this.clearHighlight();
+									this.game.canvas.style.cursor = 'default';
+									EventBus.emit('hoverTextureCanvas', null);
+								});
+
 								this.sprites.set(name, sprite);
 
-								EventBus.emit('textureLoaded', name);
 								EventBus.emit('uploadResult', { name, success: true });
 							} catch (error) {
 								EventBus.emit('uploadResult', {
@@ -423,5 +435,27 @@ export default class MainScene extends Scene {
 		if (this.cursors.down.isDown) {
 			this.centerPoint.y += this.cameraSpeed;
 		}
+	}
+
+	private highlightSprite(name: string) {
+		const sprite = this.sprites.get(name);
+		if (sprite) {
+			this.currentHighlight?.destroy();
+			this.currentHighlight = this.add.rectangle(
+				sprite.x,
+				sprite.y,
+				sprite.width,
+				sprite.height,
+				0x00ff00,
+				0.3
+			);
+			this.currentHighlight.setOrigin(0, 0);
+			this.currentHighlight.setStrokeStyle(2, 0x00ff00);
+		}
+	}
+
+	private clearHighlight() {
+		this.currentHighlight?.destroy();
+		this.currentHighlight = undefined;
 	}
 }

@@ -12,6 +12,9 @@ const config: Phaser.Types.Core.GameConfig = {
 		height: '100%',
 		autoCenter: Phaser.Scale.CENTER_BOTH
 	},
+	input: {
+		windowEvents: true
+	},
 	disableContextMenu: true,
 	transparent: true,
 	scene: [BootScene, LoadScene, MainScene],

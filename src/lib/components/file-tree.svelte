@@ -3,10 +3,7 @@
 	import EventBus from '$lib/phaser/event-bus';
 
 	let loadedTextures = $state(new Set<string>());
-
-	const handleTextureLoaded = (textureName: string) => {
-		loadedTextures = new Set([...loadedTextures, textureName]);
-	};
+	let hoveredFile: string | null = $state(null);
 
 	const handleUploadResult = (result: { name: string; success: boolean }) => {
 		if (result.success) {
@@ -22,8 +19,10 @@
 		EventBus.emit('hoverTextureFileTree', null);
 	};
 
-	EventBus.on('textureLoaded', handleTextureLoaded);
 	EventBus.on('uploadResult', handleUploadResult);
+	EventBus.on('hoverTextureCanvas', (name: string | null) => {
+		hoveredFile = name;
+	});
 </script>
 
 <div class="flex flex-col">
@@ -50,7 +49,8 @@
 				<ul class="menu-content max-h-[calc(100vh-33rem)] overflow-y-auto">
 					{#each fileState.assets as asset}
 						<li
-							class="text-right"
+							class="hover:bg-neutral-focus text-right hover:rounded-lg"
+							class:highlighted={hoveredFile === asset.name}
 							onmouseenter={() => handleMouseEnter(asset.name)}
 							onmouseleave={() => handleMouseLeave()}
 						>
@@ -92,5 +92,9 @@
 	.menu :where(li ul)::before {
 		top: 0.5rem;
 		bottom: 0.5rem;
+	}
+
+	.highlighted {
+		@apply rounded-lg bg-neutral-content bg-opacity-10;
 	}
 </style>

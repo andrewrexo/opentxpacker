@@ -19,5 +19,6 @@
 }
 
 canvas {
-	@apply bg-base-300;
+	@apply relative z-10 bg-base-300;
+	pointer-events: auto !important;
 }

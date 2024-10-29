@@ -11,10 +11,10 @@ interface UploadResult {
 
 type EventMap = {
 	loadNewAssets: (assets: AssetData[]) => void;
-	textureLoaded: (textureName: string) => void;
 	uploadResult: (result: UploadResult) => void;
 	adjustZoom: (value: number) => void;
 	hoverTextureFileTree: (textureName: string) => void;
+	hoverTextureCanvas: (textureName: string | null) => void;
 	exportAtlas: (options: { format: string; textureFormat: string }) => void;
 };
 
