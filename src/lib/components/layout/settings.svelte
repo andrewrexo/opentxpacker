@@ -28,7 +28,8 @@
 			Export
 		</Button>
 	</div>
-	<span class="mx-auto pt-4 text-center text-xs text-base-content/50">
+	<div class="divider mb-2"></div>
+	<span class="mx-auto pb-4 pt-1 text-center text-xs text-base-content/50">
 		beta version 0.1.0.
 		<br />
 		contact:
@@ -40,4 +41,30 @@
 			andrew@rubes.dev
 		</a>
 	</span>
+	<div class="flex items-center justify-center gap-2 text-primary">
+		<a
+			aria-label="Twitter"
+			href="https://x.com/drdreidelrx/"
+			target="_blank"
+			class="btn btn-circle flex items-center justify-center gap-2 hover:scale-105 hover:text-primary"
+		>
+			<iconify-icon icon="line-md:twitter-x" height="1.25rem" width="1.25rem"></iconify-icon>
+		</a>
+		<a
+			aria-label="GitHub"
+			href="https://github.com/andrewrexo"
+			target="_blank"
+			class="btn btn-circle flex items-center justify-center gap-2 hover:scale-105 hover:text-primary"
+		>
+			<iconify-icon icon="line-md:github" height="1.25rem" width="1.25rem"></iconify-icon>
+		</a>
+		<a
+			aria-label="Portfolio"
+			href="https://rubes.dev/"
+			target="_blank"
+			class="btn btn-circle flex items-center justify-center gap-2 hover:scale-105 hover:text-primary"
+		>
+			<iconify-icon icon="line-md:person" height="1.25rem" width="1.25rem"></iconify-icon>
+		</a>
+	</div>
 </div>
