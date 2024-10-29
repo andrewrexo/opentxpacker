@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	interface ButtonProps {
+	interface ButtonProps extends HTMLAttributes<HTMLButtonElement> {
 		children: Snippet;
 		caret?: boolean;
 		className?: string;
 	}
 
-	let { children, caret = false, className }: ButtonProps = $props();
+	let { children, caret = false, className, ...rest }: ButtonProps = $props();
 
 	let isHovered = $state(false);
 
@@ -25,6 +25,7 @@
 		class="btn flex-1 flex-row-reverse items-center justify-between transition-transform hover:text-primary {className}"
 		onmouseenter={onMouseEnter}
 		onmouseleave={onMouseLeave}
+		{...rest}
 	>
 		{@render children()}
 		{#if caret}

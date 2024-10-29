@@ -15,6 +15,7 @@ type EventMap = {
 	uploadResult: (result: UploadResult) => void;
 	adjustZoom: (value: number) => void;
 	hoverTextureFileTree: (textureName: string) => void;
+	exportAtlas: (options: { format: string; textureFormat: string }) => void;
 };
 
 type EventTypes = keyof EventMap;

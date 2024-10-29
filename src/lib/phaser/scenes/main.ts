@@ -19,6 +19,7 @@ export default class MainScene extends Scene {
 	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 	private centerPoint!: Phaser.Math.Vector2;
 	private currentHighlight?: Phaser.GameObjects.Rectangle;
+	private atlasBoundary?: Phaser.GameObjects.Rectangle;
 
 	constructor() {
 		super({ key: 'main' });
@@ -123,14 +124,17 @@ export default class MainScene extends Scene {
 				this.currentHighlight = undefined;
 			}
 		});
+
+		EventBus.on('exportAtlas', (options) => {
+			console.log('exporting atlas', options);
+			this.exportAtlas({ ...options });
+		});
 	}
 
 	private drawAtlasBoundary() {
-		const graphics = this.add.graphics();
-		graphics.lineStyle(4, 0x666666, 0.5);
-		graphics.fillStyle(0x666666, 0.2);
-		graphics.strokeRect(0, 0, this.atlasWidth, this.atlasHeight);
-		graphics.fillRect(0, 0, this.atlasWidth, this.atlasHeight);
+		this.atlasBoundary = this.add.rectangle(0, 0, this.atlasWidth, this.atlasHeight, 0x666666, 0.2);
+		this.atlasBoundary.setStrokeStyle(4, 0x666666, 0.5);
+		this.atlasBoundary.setOrigin(0, 0);
 	}
 
 	private initializeAtlas() {
@@ -279,6 +283,113 @@ export default class MainScene extends Scene {
 		EventBus.emit('adjustZoom', optimalZoom * 100);
 
 		return optimalZoom;
+	}
+
+	private async handleSnapshot(snap: HTMLImageElement, fileType: string) {
+		const dataUrl = snap.src;
+		const metadata = this.getAtlasMetadata();
+
+		const imageBlob = await (await fetch(dataUrl)).blob();
+		const imageFile = new File([imageBlob], `atlas.${fileType}`, {
+			type: `image/${fileType}`
+		});
+		const jsonBlob = new Blob([JSON.stringify(metadata, null, 2)], {
+			type: 'application/json'
+		});
+		const jsonFile = new File([jsonBlob], 'atlas.json', {
+			type: 'application/json'
+		});
+
+		const imageUrl = URL.createObjectURL(imageFile);
+		const jsonUrl = URL.createObjectURL(jsonFile);
+
+		const downloadLink = document.createElement('a');
+		downloadLink.href = imageUrl;
+		downloadLink.download = imageFile.name;
+		downloadLink.click();
+
+		downloadLink.href = jsonUrl;
+		downloadLink.download = jsonFile.name;
+		downloadLink.click();
+
+		downloadLink.remove();
+		URL.revokeObjectURL(imageUrl);
+		URL.revokeObjectURL(jsonUrl);
+	}
+
+	async exportAtlas(options: { format: string; textureFormat: string }) {
+		const { textureFormat } = options;
+		const fileType = textureFormat.toLowerCase().includes('png') ? 'png' : 'webp';
+
+		const offscreenCanvas = document.createElement('canvas');
+		offscreenCanvas.width = this.atlasWidth;
+		offscreenCanvas.height = this.atlasHeight;
+		const offscreenCtx = offscreenCanvas.getContext('2d');
+
+		this.sprites.forEach((sprite) => {
+			const texture = sprite.texture;
+			const frame = sprite.frame;
+			offscreenCtx?.drawImage(
+				texture.getSourceImage() as HTMLImageElement,
+				frame.x,
+				frame.y,
+				frame.width,
+				frame.height,
+				sprite.x,
+				sprite.y,
+				sprite.width,
+				sprite.height
+			);
+		});
+
+		const dataUrl = offscreenCanvas.toDataURL(`image/${fileType}`);
+
+		const snap = new Image();
+		snap.src = dataUrl;
+		snap.onload = () => {
+			this.handleSnapshot(snap, fileType);
+		};
+	}
+
+	private getAtlasMetadata() {
+		const frames: Record<
+			string,
+			{
+				frame: { x: number; y: number; w: number; h: number };
+				rotated: boolean;
+				trimmed: boolean;
+				sourceSize: { w: number; h: number };
+			}
+		> = {};
+
+		this.sprites.forEach((sprite, name) => {
+			frames[name] = {
+				frame: {
+					x: sprite.x,
+					y: sprite.y,
+					w: sprite.width,
+					h: sprite.height
+				},
+				rotated: false,
+				trimmed: false,
+				sourceSize: {
+					w: sprite.width,
+					h: sprite.height
+				}
+			};
+		});
+
+		return {
+			frames,
+			meta: {
+				app: 'OpenTXPacker',
+				version: '1.0',
+				image: 'atlas.png',
+				format: 'RGBA8888',
+				size: { w: this.atlasWidth, h: this.atlasHeight },
+				scale: 1
+			}
+		};
 	}
 
 	resize() {

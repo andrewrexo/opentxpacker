@@ -2,6 +2,7 @@ import { AUTO } from 'phaser';
 import { BootScene } from './scenes/boot';
 import LoadScene from './scenes/load';
 import MainScene from './scenes/main';
+
 const config: Phaser.Types.Core.GameConfig = {
 	type: AUTO,
 	parent: 'canvas-container',
@@ -16,8 +17,8 @@ const config: Phaser.Types.Core.GameConfig = {
 	scene: [BootScene, LoadScene, MainScene],
 	render: {
 		powerPreference: 'high-performance',
-		pixelArt: true,
-	},
+		pixelArt: true
+	}
 };
 
 export default config;

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Game } from 'phaser';
-	import { debounce } from 'lodash';
 	import config from '$lib/phaser/config';
 
 	let game: Game;

@@ -1,5 +1,6 @@
 <script>
 	import Select from '$lib/components/primitives/select.svelte';
+	import eventBus from '$lib/phaser/event-bus';
 	import Button from '../primitives/button.svelte';
 
 	let exportFormat = $state('Phaser 3');
@@ -7,6 +8,13 @@
 
 	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
+
+	const handleExport = () => {
+		eventBus.emit('exportAtlas', {
+			format: exportFormat,
+			textureFormat: textureFormat
+		});
+	};
 </script>
 
 <header class="flex items-center justify-between pb-2">
@@ -20,7 +28,13 @@
 	</div>
 
 	<div class="mt-auto grid grid-cols-1 gap-2">
-		<Button caret className="bigger-button">
+		<Button
+			caret
+			className="bigger-button"
+			onclick={() => {
+				handleExport();
+			}}
+		>
 			<span class="h-5 w-5">
 				<iconify-icon icon="line-md:file-export-filled" height="1.25rem" width="1.25rem"
 				></iconify-icon>
