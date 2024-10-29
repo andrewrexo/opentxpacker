@@ -1,6 +1,8 @@
 # ![OpenTXPacker](/static/logo.png)
 
 An open-source texture atlas packer built with Svelte 5 and Phaser 3. OpenTXPacker provides a modern, efficient alternative to TexturePacker for combining multiple textures into optimized sprite atlases.
+<img src="https://github.com/user-attachments/assets/664b191a-1991-4077-a766-88bc878a7ead" width="500" />
+
 
 ## Features
 
