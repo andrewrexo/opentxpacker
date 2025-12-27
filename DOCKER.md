@@ -71,7 +71,7 @@ The Docker images are built for the following architectures:
 
 Docker will automatically pull the correct image for your platform.
 
-**Note**: Only amd64 and arm64 are supported because the application uses Bun, which is only available for these architectures.
+**Note**: The Docker image uses Node.js 24 Alpine for minimal size and maximum security. npm is removed from the production image to eliminate all package vulnerabilities.
 
 ## Environment Variables
 

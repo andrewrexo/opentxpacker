@@ -1,30 +1,37 @@
 # Build stage
-FROM oven/bun:1 AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json bun.lockb ./
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
 
-# Install dependencies (update lockfile for new adapter-node)
-RUN bun install
+# Copy package files
+COPY package.json ./
+
+# Install dependencies with npm
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN bun run build
+# Sync SvelteKit and build the application
+RUN npx svelte-kit sync
+RUN NODE_ENV=production npm run build
 
 # Production stage
-FROM oven/bun:1-slim
+FROM node:24-alpine
 
 WORKDIR /app
 
 # Copy package files from builder
 COPY --from=builder /app/package.json ./
 
-# Copy node_modules from builder (already installed)
-COPY --from=builder /app/node_modules ./node_modules
+# Install only production dependencies (excludes devDependencies like esbuild)
+RUN npm install --omit=dev && \
+    # Remove npm and related packages to eliminate glob vulnerabilities
+    npm cache clean --force && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack ~/.npm
 
 # Copy built application from builder stage
 COPY --from=builder /app/build ./build
