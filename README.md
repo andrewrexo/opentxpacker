@@ -41,6 +41,28 @@ An open-source texture atlas packer built with Svelte 5 and Phaser 3. OpenTXPack
 
 4. Open your browser and navigate to `http://localhost:5173`
 
+## Deployment
+
+### Docker (Recommended)
+
+Deploy with Docker for production use:
+
+```bash
+docker compose up -d
+```
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions.
+
+### Cloudflare Tunnel (Secure Production)
+
+Deploy with Cloudflare Tunnel for secure, zero-port-forwarding hosting:
+
+```bash
+docker compose -f docker-compose.cloudflare.yml up -d
+```
+
+See [CLOUDFLARE.md](CLOUDFLARE.md) for complete Cloudflare Tunnel setup guide.
+
 ## Usage
 
 1. Open the application in your browser

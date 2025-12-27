@@ -19,6 +19,16 @@ docker build -t opentxpacker .
 docker run -p 3000:3000 opentxpacker
 ```
 
+### Cloudflare Tunnel Deployment (Recommended for Production)
+
+For secure, production-ready deployment without opening ports:
+
+```bash
+docker compose -f docker-compose.cloudflare.yml up -d
+```
+
+This setup uses Cloudflare Tunnel to expose your application securely to the internet without port forwarding. See [CLOUDFLARE.md](CLOUDFLARE.md) for detailed setup instructions.
+
 ## Using Pre-built Images from GitHub Container Registry
 
 Pre-built multi-architecture images (amd64, arm64) are available from GitHub Container Registry:
