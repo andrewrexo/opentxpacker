@@ -100,6 +100,7 @@ The following tags are automatically generated:
 - `v1.0.0`, `v1.0`, `v1` - Semantic version tags
 - `master` - Latest build from master branch
 - `master-<sha>` - Specific commit from master branch
+- `2025-12-27-20-04` - Build timestamp in UTC (YYYY-MM-DD-HH-mm format)
 
 ## Building Locally
 

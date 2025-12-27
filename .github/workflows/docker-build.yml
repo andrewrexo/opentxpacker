@@ -57,6 +57,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha,prefix={{branch}}-
+            type=raw,value={{date 'YYYY-MM-DD-HH-mm' tz='UTC'}}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
