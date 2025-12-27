@@ -66,8 +66,11 @@ docker compose up -d
 ## Architecture Support
 
 The Docker images are built for the following architectures:
-- `linux/amd64` (x86_64)
-- `linux/arm64` (ARM 64-bit, Apple Silicon, Raspberry Pi 4+)
+- `linux/amd64` (x86_64 - Standard desktops, servers, cloud)
+- `linux/arm64` (ARM 64-bit - Apple Silicon, newer ARM servers, Raspberry Pi 4/5 64-bit)
+- `linux/arm/v7` (ARM 32-bit v7 - Raspberry Pi 2/3/4 32-bit)
+- `linux/arm/v6` (ARM 32-bit v6 - Raspberry Pi Zero/1)
+- `linux/386` (32-bit x86 - Legacy systems)
 
 Docker will automatically pull the correct image for your platform.
 
