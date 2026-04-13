@@ -146,6 +146,11 @@ export default class MainScene extends Scene {
 			this.saveProject();
 		});
 
+		EventBus.on('requestManifest', () => {
+			const metadata = this.getAtlasMetadata('Phaser 3', 'png');
+			EventBus.emit('manifestData', JSON.stringify(metadata, null, 2));
+		});
+
 		EventBus.on('loadProject', (data) => {
 			this.loadProjectData(data);
 		});

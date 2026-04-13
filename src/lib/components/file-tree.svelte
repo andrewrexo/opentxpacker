@@ -19,9 +19,24 @@
 		EventBus.emit('hoverTextureFileTree', null);
 	};
 
+	const handleManifestClick = () => {
+		EventBus.emit('requestManifest');
+	};
+
 	EventBus.on('uploadResult', handleUploadResult);
 	EventBus.on('hoverTextureCanvas', (name: string | null) => {
 		hoveredFile = name;
+	});
+
+	EventBus.on('manifestData', (json: string) => {
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = 'asset-manifest.json';
+		link.click();
+		link.remove();
+		URL.revokeObjectURL(url);
 	});
 </script>
 
@@ -80,7 +95,13 @@
 			</details>
 		</li>
 		<li>
-			<a>
+			<a
+				role="button"
+				tabindex="0"
+				onclick={handleManifestClick}
+				onkeydown={(e) => e.key === 'Enter' && handleManifestClick()}
+				class="cursor-pointer"
+			>
 				<iconify-icon icon="si:json-duotone" width="1rem" height="1rem" class="h-4 w-4" />
 				asset-manifest.json
 			</a>

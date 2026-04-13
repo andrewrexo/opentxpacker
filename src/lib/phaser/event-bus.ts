@@ -33,6 +33,8 @@ type EventMap = {
 	saveProject: () => void;
 	projectData: (data: ProjectData) => void;
 	loadProject: (data: ProjectData) => void;
+	requestManifest: () => void;
+	manifestData: (json: string) => void;
 };
 
 type EventTypes = keyof EventMap;
