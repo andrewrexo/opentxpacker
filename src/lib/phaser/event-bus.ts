@@ -41,6 +41,8 @@ type EventMap = {
 	setTrimEnabled: (enabled: boolean) => void;
 	setAlgorithm: (algorithm: string) => void;
 	setHeuristic: (heuristic: string) => void;
+	autoSizeAtlas: () => void;
+	atlasSizeChanged: (size: string) => void;
 };
 
 type EventTypes = keyof EventMap;

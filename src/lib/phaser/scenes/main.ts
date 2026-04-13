@@ -221,6 +221,10 @@ export default class MainScene extends Scene {
 			this.repackAllSprites();
 		});
 
+		EventBus.on('autoSizeAtlas', () => {
+			this.autoSizeAtlas();
+		});
+
 		EventBus.on('removeSprite', (name) => {
 			const sprite = this.sprites.get(name);
 			if (sprite) {
@@ -246,6 +250,71 @@ export default class MainScene extends Scene {
 		this.atlasBoundary = this.add.rectangle(0, 0, this.atlasWidth, this.atlasHeight, 0x666666, 0.2);
 		this.atlasBoundary.setStrokeStyle(4, 0x666666, 0.5);
 		this.atlasBoundary.setOrigin(0, 0);
+	}
+
+	private autoSizeAtlas() {
+		// Collect all sprite dimensions
+		const sizes: Array<{ width: number; height: number }> = [];
+		this.sprites.forEach((sprite) => {
+			sizes.push({ width: sprite.width, height: sprite.height });
+		});
+
+		if (sizes.length === 0) return;
+
+		// Try power-of-2 sizes from 64 up to 8192
+		const pot = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
+
+		for (const size of pot) {
+			// Try square first
+			if (this.tryPackAll(sizes, size, size)) {
+				this.atlasWidth = size;
+				this.atlasHeight = size;
+				this.atlasBoundary?.destroy();
+				this.drawAtlasBoundary();
+				this.packer.resize(size, size);
+				this.repackAllSprites();
+				EventBus.emit('atlasSizeChanged', `${size}x${size}`);
+				return;
+			}
+		}
+
+		// If nothing worked, use max size
+		const max = pot[pot.length - 1];
+		this.atlasWidth = max;
+		this.atlasHeight = max;
+		this.atlasBoundary?.destroy();
+		this.drawAtlasBoundary();
+		this.packer.resize(max, max);
+		this.repackAllSprites();
+		EventBus.emit('atlasSizeChanged', `${max}x${max}`);
+	}
+
+	/**
+	 * Test whether all sprites fit in a given atlas size without
+	 * modifying the actual scene state.
+	 */
+	private tryPackAll(
+		sizes: Array<{ width: number; height: number }>,
+		width: number,
+		height: number
+	): boolean {
+		const testPacker = createPacker({
+			algorithm: this.packAlgorithm,
+			heuristic: this.packHeuristic,
+			width,
+			height,
+			padding: this.padding
+		});
+
+		// Sort largest-area first for more reliable packing test
+		const sorted = [...sizes].sort((a, b) => b.width * b.height - a.width * a.height);
+
+		for (const size of sorted) {
+			const result = testPacker.findPosition(size.width, size.height);
+			if (!result) return false;
+		}
+
+		return true;
 	}
 
 	private recreatePacker() {

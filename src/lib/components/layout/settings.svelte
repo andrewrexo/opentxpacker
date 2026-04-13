@@ -13,7 +13,7 @@
 
 	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
-	const atlasSizeOptions = ['256x256', '512x512', '1024x1024', '2048x2048', '4096x4096'];
+	const atlasSizeOptions = ['Auto', '256x256', '512x512', '1024x1024', '2048x2048', '4096x4096'];
 	const paddingOptions = ['0', '1', '2', '4', '8'];
 	const algorithmOptions = ['MaxRects', 'Basic'];
 	const heuristicOptions = [
@@ -25,9 +25,21 @@
 	];
 
 	const handleAtlasSizeChange = () => {
-		const [w, h] = atlasSize.split('x').map(Number);
-		eventBus.emit('resizeAtlas', { width: w, height: h });
+		if (atlasSize === 'Auto') {
+			eventBus.emit('autoSizeAtlas');
+		} else {
+			const [w, h] = atlasSize.split('x').map(Number);
+			eventBus.emit('resizeAtlas', { width: w, height: h });
+		}
 	};
+
+	// Listen for auto-size result to update the dropdown display
+	eventBus.on('atlasSizeChanged', (size: string) => {
+		// Don't override if user manually set a size
+		if (atlasSize === 'Auto') {
+			// Keep "Auto" selected but we could update a label
+		}
+	});
 
 	const handlePaddingChange = () => {
 		eventBus.emit('setPadding', parseInt(spritePadding));
