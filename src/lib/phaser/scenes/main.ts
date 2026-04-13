@@ -36,6 +36,9 @@ export default class MainScene extends Scene {
 	private originalImages: Map<string, HTMLImageElement> = new Map();
 	private packAlgorithm: PackingAlgorithm = 'MaxRects';
 	private packHeuristic: MaxRectsHeuristic = 'BestShortSideFit';
+	private isDragging = false;
+	private dragPrevX = 0;
+	private dragPrevY = 0;
 
 	constructor() {
 		super({ key: 'main' });
@@ -45,7 +48,6 @@ export default class MainScene extends Scene {
 		this.cameras.main.fadeIn(500, 32, 37, 46);
 
 		this.centerPoint = new Phaser.Math.Vector2(this.atlasWidth / 2, this.atlasHeight / 2);
-		this.cameras.main.startFollow(this.centerPoint, true);
 
 		this.logo = this.add.image(this.atlasWidth / 2, this.atlasHeight / 2, 'logo').setAlpha(0.5);
 
@@ -57,6 +59,35 @@ export default class MainScene extends Scene {
 
 		this.game.scale.on('resize', this.handleResize, this);
 		this.resize();
+
+		// Middle-click drag to pan
+		this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+			if (pointer.middleButtonDown()) {
+				this.isDragging = true;
+				this.dragPrevX = pointer.x;
+				this.dragPrevY = pointer.y;
+				this.game.canvas.style.cursor = 'grabbing';
+			}
+		});
+
+		this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+			if (this.isDragging) {
+				const zoom = this.cameras.main.zoom;
+				const dx = (this.dragPrevX - pointer.x) / zoom;
+				const dy = (this.dragPrevY - pointer.y) / zoom;
+				this.cameras.main.scrollX += dx;
+				this.cameras.main.scrollY += dy;
+				this.dragPrevX = pointer.x;
+				this.dragPrevY = pointer.y;
+			}
+		});
+
+		this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+			if (this.isDragging && !pointer.middleButtonDown()) {
+				this.isDragging = false;
+				this.game.canvas.style.cursor = 'default';
+			}
+		});
 
 		EventBus.on('adjustZoom', (value) => {
 			this.cameras.main.setZoom(value / 100);
@@ -129,6 +160,12 @@ export default class MainScene extends Scene {
 									this.clearHighlight();
 									this.game.canvas.style.cursor = 'default';
 									EventBus.emit('hoverTextureCanvas', null);
+								});
+
+								sprite.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+									if (pointer.leftButtonDown()) {
+										EventBus.emit('selectSprite', name);
+									}
 								});
 
 								this.sprites.set(name, sprite);
@@ -329,6 +366,7 @@ export default class MainScene extends Scene {
 			if (this.tryPackAll(sizes, size, size)) {
 				this.atlasWidth = size;
 				this.atlasHeight = size;
+				this.centerLogo();
 				this.clearAllPages();
 				this.addPage();
 				this.repackAllSprites();
@@ -341,6 +379,7 @@ export default class MainScene extends Scene {
 		const max = pot[pot.length - 1];
 		this.atlasWidth = max;
 		this.atlasHeight = max;
+		this.centerLogo();
 		this.clearAllPages();
 		this.addPage();
 		this.repackAllSprites();
@@ -378,9 +417,14 @@ export default class MainScene extends Scene {
 	private resizeAtlasTo(width: number, height: number) {
 		this.atlasWidth = width;
 		this.atlasHeight = height;
+		this.centerLogo();
 		this.clearAllPages();
 		this.addPage();
 		this.repackAllSprites();
+	}
+
+	private centerLogo() {
+		this.logo.setPosition(this.atlasWidth / 2, this.atlasHeight / 2);
 	}
 
 	private retextureAndRepack() {
@@ -894,16 +938,16 @@ export default class MainScene extends Scene {
 		if (!this.cursors) return;
 
 		if (this.cursors.left.isDown) {
-			this.centerPoint.x -= this.cameraSpeed;
+			this.cameras.main.scrollX -= this.cameraSpeed;
 		}
 		if (this.cursors.right.isDown) {
-			this.centerPoint.x += this.cameraSpeed;
+			this.cameras.main.scrollX += this.cameraSpeed;
 		}
 		if (this.cursors.up.isDown) {
-			this.centerPoint.y -= this.cameraSpeed;
+			this.cameras.main.scrollY -= this.cameraSpeed;
 		}
 		if (this.cursors.down.isDown) {
-			this.centerPoint.y += this.cameraSpeed;
+			this.cameras.main.scrollY += this.cameraSpeed;
 		}
 	}
 

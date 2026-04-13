@@ -43,6 +43,7 @@ type EventMap = {
 	setHeuristic: (heuristic: string) => void;
 	autoSizeAtlas: () => void;
 	atlasSizeChanged: (size: string) => void;
+	selectSprite: (name: string) => void;
 };
 
 type EventTypes = keyof EventMap;
