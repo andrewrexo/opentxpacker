@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Select from '$lib/components/primitives/select.svelte';
 	import eventBus from '$lib/phaser/event-bus';
 	import Button from '../primitives/button.svelte';

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	interface ButtonProps extends HTMLAttributes<HTMLButtonElement> {
+	interface ButtonProps extends HTMLButtonAttributes {
 		children: Snippet;
 		caret?: boolean;
 		className?: string;
