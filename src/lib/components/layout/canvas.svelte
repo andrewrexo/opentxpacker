@@ -11,5 +11,4 @@
 	<div class="absolute bottom-4 left-4 flex items-center gap-2">
 		<ZoomControl />
 	</div>
-	<p class="absolute left-4 top-4 z-10 text-sm">interactable action text</p>
 </div>
