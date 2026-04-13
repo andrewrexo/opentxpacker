@@ -1,5 +1,6 @@
 <script lang="ts">
 	let selected = $state('');
+	let dropdownEl: HTMLDivElement;
 
 	let {
 		options = [],
@@ -19,14 +20,29 @@
 		selected = value;
 	});
 
+	function closeDropdown() {
+		const active = document.activeElement as HTMLElement | null;
+		if (active && dropdownEl?.contains(active)) {
+			active.blur();
+		}
+	}
+
 	function handleSelect(option: string) {
 		selected = option;
 		value = option;
+		closeDropdown();
 		onchange?.();
+	}
+
+	function handleToggle() {
+		// If the dropdown is already open (has focus within), close it
+		if (dropdownEl?.matches(':focus-within')) {
+			closeDropdown();
+		}
 	}
 </script>
 
-<div class="dropdown dropdown-bottom w-full">
+<div class="dropdown dropdown-bottom w-full" bind:this={dropdownEl}>
 	{#if label}
 		<label class="label px-0" for={label}>
 			<span class="label-text text-sm font-bold">{label}</span>
@@ -37,6 +53,8 @@
 	<label
 		for={label}
 		tabindex="0"
+		role="button"
+		onclick={handleToggle}
 		class="relative flex h-10 w-full cursor-pointer items-center rounded-lg bg-base-200 px-4 text-left hover:bg-base-300 focus:outline-none focus:ring-2 focus:ring-primary"
 	>
 		<span class="block flex-1 truncate">
