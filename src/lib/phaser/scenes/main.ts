@@ -305,9 +305,9 @@ export default class MainScene extends Scene {
 		return optimalZoom;
 	}
 
-	private async handleSnapshot(snap: HTMLImageElement, fileType: string) {
+	private async handleSnapshot(snap: HTMLImageElement, fileType: string, format: string) {
 		const dataUrl = snap.src;
-		const metadata = this.getAtlasMetadata();
+		const metadata = this.getAtlasMetadata(format, fileType);
 
 		const imageBlob = await (await fetch(dataUrl)).blob();
 		const imageFile = new File([imageBlob], `atlas.${fileType}`, {
@@ -338,7 +338,7 @@ export default class MainScene extends Scene {
 	}
 
 	async exportAtlas(options: { format: string; textureFormat: string }) {
-		const { textureFormat } = options;
+		const { format, textureFormat } = options;
 		const fileType = textureFormat.toLowerCase().includes('png') ? 'png' : 'webp';
 
 		const offscreenCanvas = document.createElement('canvas');
@@ -367,11 +367,23 @@ export default class MainScene extends Scene {
 		const snap = new Image();
 		snap.src = dataUrl;
 		snap.onload = () => {
-			this.handleSnapshot(snap, fileType);
+			this.handleSnapshot(snap, fileType, format);
 		};
 	}
 
-	private getAtlasMetadata() {
+	private getAtlasMetadata(format: string, fileType: string) {
+		const imageFilename = `atlas.${fileType}`;
+
+		if (format === 'Multiatlas') {
+			return this.getMultiatlasMetadata(imageFilename);
+		} else if (format === 'JSON') {
+			return this.getGenericJsonMetadata(imageFilename);
+		}
+
+		return this.getPhaser3Metadata(imageFilename);
+	}
+
+	private getPhaser3Metadata(imageFilename: string) {
 		const frames: Record<
 			string,
 			{
@@ -404,11 +416,89 @@ export default class MainScene extends Scene {
 			meta: {
 				app: 'OpenTXPacker',
 				version: '1.0',
-				image: 'atlas.png',
+				image: imageFilename,
 				format: 'RGBA8888',
 				size: { w: this.atlasWidth, h: this.atlasHeight },
 				scale: 1
 			}
+		};
+	}
+
+	private getMultiatlasMetadata(imageFilename: string) {
+		const frames: Array<{
+			filename: string;
+			frame: { x: number; y: number; w: number; h: number };
+			rotated: boolean;
+			trimmed: boolean;
+			sourceSize: { w: number; h: number };
+			spriteSourceSize: { x: number; y: number; w: number; h: number };
+		}> = [];
+
+		this.sprites.forEach((sprite, name) => {
+			frames.push({
+				filename: name,
+				frame: {
+					x: sprite.x,
+					y: sprite.y,
+					w: sprite.width,
+					h: sprite.height
+				},
+				rotated: false,
+				trimmed: false,
+				sourceSize: {
+					w: sprite.width,
+					h: sprite.height
+				},
+				spriteSourceSize: {
+					x: 0,
+					y: 0,
+					w: sprite.width,
+					h: sprite.height
+				}
+			});
+		});
+
+		return {
+			textures: [
+				{
+					image: imageFilename,
+					format: 'RGBA8888',
+					size: { w: this.atlasWidth, h: this.atlasHeight },
+					scale: 1,
+					frames
+				}
+			],
+			meta: {
+				app: 'OpenTXPacker',
+				version: '1.0'
+			}
+		};
+	}
+
+	private getGenericJsonMetadata(imageFilename: string) {
+		const frames: Array<{
+			name: string;
+			x: number;
+			y: number;
+			width: number;
+			height: number;
+		}> = [];
+
+		this.sprites.forEach((sprite, name) => {
+			frames.push({
+				name,
+				x: sprite.x,
+				y: sprite.y,
+				width: sprite.width,
+				height: sprite.height
+			});
+		});
+
+		return {
+			image: imageFilename,
+			width: this.atlasWidth,
+			height: this.atlasHeight,
+			frames
 		};
 	}
 
