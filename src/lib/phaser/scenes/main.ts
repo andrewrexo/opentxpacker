@@ -20,6 +20,7 @@ export default class MainScene extends Scene {
 	private centerPoint!: Phaser.Math.Vector2;
 	private currentHighlight?: Phaser.GameObjects.Rectangle;
 	private atlasBoundary?: Phaser.GameObjects.Rectangle;
+	private padding = 0;
 
 	constructor() {
 		super({ key: 'main' });
@@ -158,6 +159,11 @@ export default class MainScene extends Scene {
 		EventBus.on('resizeAtlas', ({ width, height }) => {
 			this.resizeAtlasTo(width, height);
 		});
+
+		EventBus.on('setPadding', (padding) => {
+			this.padding = padding;
+			this.repackAllSprites();
+		});
 	}
 
 	private drawAtlasBoundary() {
@@ -169,12 +175,12 @@ export default class MainScene extends Scene {
 	private resizeAtlasTo(width: number, height: number) {
 		this.atlasWidth = width;
 		this.atlasHeight = height;
-
-		// Redraw boundary
 		this.atlasBoundary?.destroy();
 		this.drawAtlasBoundary();
+		this.repackAllSprites();
+	}
 
-		// Re-pack all sprites
+	private repackAllSprites() {
 		this.initializeAtlas();
 
 		const spritesToRepack = new Map(this.sprites);
@@ -192,7 +198,7 @@ export default class MainScene extends Scene {
 				EventBus.emit('uploadResult', {
 					name,
 					success: false,
-					error: 'No space left in resized atlas'
+					error: 'No space left in atlas'
 				});
 				return;
 			}
@@ -216,7 +222,6 @@ export default class MainScene extends Scene {
 			this.sprites.set(name, sprite);
 		});
 
-		// Recenter camera
 		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
 		this.resize();
 	}
@@ -233,21 +238,31 @@ export default class MainScene extends Scene {
 	}
 
 	private findPosition(width: number, height: number): Rectangle | null {
+		const paddedWidth = width + this.padding * 2;
+		const paddedHeight = height + this.padding * 2;
+
 		// Sort free rectangles by area to try smaller spaces first
 		this.freeRects.sort((a, b) => a.width * a.height - b.width * b.height);
 
 		for (const freeRect of this.freeRects) {
-			if (freeRect.width >= width && freeRect.height >= height) {
-				// Found a suitable rectangle
-				const position = {
+			if (freeRect.width >= paddedWidth && freeRect.height >= paddedHeight) {
+				// Reserve the full padded area in the free rect tracker
+				const paddedRect = {
 					x: freeRect.x,
 					y: freeRect.y,
+					width: paddedWidth,
+					height: paddedHeight
+				};
+
+				this.splitFreeRectangles(paddedRect);
+
+				// Return the inner position (offset by padding)
+				return {
+					x: freeRect.x + this.padding,
+					y: freeRect.y + this.padding,
 					width,
 					height
 				};
-
-				this.splitFreeRectangles(position);
-				return position;
 			}
 		}
 
