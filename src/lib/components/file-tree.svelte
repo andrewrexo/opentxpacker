@@ -23,6 +23,12 @@
 		EventBus.emit('requestManifest');
 	};
 
+	const handleRemoveAsset = (name: string) => {
+		fileState.removeAsset(name);
+		loadedTextures = new Set([...loadedTextures].filter((t) => t !== name));
+		EventBus.emit('removeSprite', name);
+	};
+
 	EventBus.on('uploadResult', handleUploadResult);
 	EventBus.on('hoverTextureCanvas', (name: string | null) => {
 		hoveredFile = name;
@@ -64,30 +70,40 @@
 				<ul class="menu-content max-h-[calc(100vh-33rem)] overflow-y-auto">
 					{#each fileState.assets as asset}
 						<li
-							class="hover:bg-neutral-focus text-right hover:rounded-lg"
+							class="group hover:bg-neutral-focus text-right hover:rounded-lg"
 							class:highlighted={hoveredFile === asset.name}
 							onmouseenter={() => handleMouseEnter(asset.name)}
 							onmouseleave={() => handleMouseLeave()}
 						>
 							<a
 								aria-label={asset.name}
+								class="flex items-center justify-between"
 								class:opacity-50={!loadedTextures.has(asset.name)}
 								class:text-error={fileState.failed.has(asset.name)}
 							>
-								<iconify-icon
-									icon="material-symbols:image-outline"
-									width="1rem"
-									height="1rem"
-									class="h-4 w-4"
-								/>
-								<span class="max-w-[8rem] truncate">
-									{asset.name}
-									{#if !loadedTextures.has(asset.name)}
-										<span class="text-xs">
-											{fileState.failed.has(asset.name) ? '(failed)' : '(loading...)'}
-										</span>
-									{/if}
+								<span class="flex items-center gap-1">
+									<iconify-icon
+										icon="material-symbols:image-outline"
+										width="1rem"
+										height="1rem"
+										class="h-4 w-4"
+									/>
+									<span class="max-w-[7rem] truncate">
+										{asset.name}
+										{#if !loadedTextures.has(asset.name)}
+											<span class="text-xs">
+												{fileState.failed.has(asset.name) ? '(failed)' : '(loading...)'}
+											</span>
+										{/if}
+									</span>
 								</span>
+								<button
+									class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity"
+									onclick={(e) => { e.stopPropagation(); handleRemoveAsset(asset.name); }}
+									aria-label="Remove {asset.name}"
+								>
+									<iconify-icon icon="mdi:close" width="0.875rem" height="0.875rem" />
+								</button>
 							</a>
 						</li>
 					{/each}

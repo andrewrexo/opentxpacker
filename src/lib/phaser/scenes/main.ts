@@ -164,6 +164,24 @@ export default class MainScene extends Scene {
 			this.padding = padding;
 			this.repackAllSprites();
 		});
+
+		EventBus.on('removeSprite', (name) => {
+			const sprite = this.sprites.get(name);
+			if (sprite) {
+				sprite.destroy();
+				this.sprites.delete(name);
+				if (this.textures.exists(name)) {
+					this.textures.remove(name);
+				}
+
+				if (this.sprites.size === 0) {
+					this.logo.setVisible(true);
+				}
+
+				// Re-pack remaining sprites to reclaim space
+				this.repackAllSprites();
+			}
+		});
 	}
 
 	private drawAtlasBoundary() {

@@ -29,6 +29,10 @@ const createFileState = () => {
 		addAsset(asset: { name: string; url: string }) {
 			assets = [...assets, asset];
 		},
+		removeAsset(name: string) {
+			assets = assets.filter((asset) => asset.name !== name);
+			failedUploads.delete(name);
+		},
 		async upload(files: FileList) {
 			// Clear previous failed uploads
 			failedUploads = new Set();
