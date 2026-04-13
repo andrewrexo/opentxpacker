@@ -1,5 +1,6 @@
 <script lang="ts">
 	let selected = $state('');
+	let open = $state(false);
 	let dropdownEl: HTMLDivElement;
 
 	let {
@@ -20,40 +21,41 @@
 		selected = value;
 	});
 
-	function closeDropdown() {
-		const active = document.activeElement as HTMLElement | null;
-		if (active && dropdownEl?.contains(active)) {
-			active.blur();
-		}
-	}
-
 	function handleSelect(option: string) {
 		selected = option;
 		value = option;
-		closeDropdown();
+		open = false;
 		onchange?.();
 	}
 
-	function handleToggle() {
-		// If the dropdown is already open (has focus within), close it
-		if (dropdownEl?.matches(':focus-within')) {
-			closeDropdown();
+	function handleToggle(e: MouseEvent) {
+		e.stopPropagation();
+		open = !open;
+	}
+
+	function handleClickOutside(e: MouseEvent) {
+		if (open && dropdownEl && !dropdownEl.contains(e.target as Node)) {
+			open = false;
 		}
 	}
+
+	$effect(() => {
+		if (open) {
+			document.addEventListener('click', handleClickOutside, true);
+			return () => document.removeEventListener('click', handleClickOutside, true);
+		}
+	});
 </script>
 
-<div class="dropdown dropdown-bottom w-full" bind:this={dropdownEl}>
+<div class="relative w-full" bind:this={dropdownEl}>
 	{#if label}
 		<label class="label px-0" for={label}>
 			<span class="label-text text-sm font-bold">{label}</span>
 		</label>
 	{/if}
 
-	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-	<label
-		for={label}
-		tabindex="0"
-		role="button"
+	<button
+		type="button"
 		onclick={handleToggle}
 		class="relative flex h-10 w-full cursor-pointer items-center rounded-lg bg-base-200 px-4 text-left hover:bg-base-300 focus:outline-none focus:ring-2 focus:ring-primary"
 	>
@@ -64,31 +66,31 @@
 			<iconify-icon icon="heroicons:chevron-down-20-solid" class="h-5 w-5 text-base-content/70"
 			></iconify-icon>
 		</span>
-	</label>
+	</button>
 
-	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-	<div
-		tabindex="0"
-		class="dropdown-content z-10 mt-1 max-h-60 min-w-full overflow-auto rounded-md bg-base-200 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-	>
-		{#each options as option}
-			<button
-				type="button"
-				onclick={() => handleSelect(option)}
-				class="relative flex w-full cursor-pointer select-none items-center justify-between px-4 py-2 text-left hover:bg-base-300 {selected ===
-				option
-					? 'bg-primary/10 text-primary'
-					: ''}"
-			>
-				<span class="block truncate">
-					{option}
-				</span>
-				{#if selected === option}
-					<iconify-icon icon="heroicons:check-20-solid"></iconify-icon>
-				{/if}
-			</button>
-		{/each}
-	</div>
+	{#if open}
+		<div
+			class="absolute z-10 mt-1 max-h-60 min-w-full overflow-auto rounded-md bg-base-200 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+		>
+			{#each options as option}
+				<button
+					type="button"
+					onclick={() => handleSelect(option)}
+					class="relative flex w-full cursor-pointer select-none items-center justify-between px-4 py-2 text-left hover:bg-base-300 {selected ===
+					option
+						? 'bg-primary/10 text-primary'
+						: ''}"
+				>
+					<span class="block truncate">
+						{option}
+					</span>
+					{#if selected === option}
+						<iconify-icon icon="heroicons:check-20-solid"></iconify-icon>
+					{/if}
+				</button>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 <style>
