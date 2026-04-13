@@ -339,17 +339,16 @@ export default class MainScene extends Scene {
 
 	async exportAtlas(options: { format: string; textureFormat: string }) {
 		const { format, textureFormat } = options;
-		const fileType = textureFormat.toLowerCase().includes('png') ? 'png' : 'webp';
 
 		const offscreenCanvas = document.createElement('canvas');
 		offscreenCanvas.width = this.atlasWidth;
 		offscreenCanvas.height = this.atlasHeight;
-		const offscreenCtx = offscreenCanvas.getContext('2d');
+		const offscreenCtx = offscreenCanvas.getContext('2d')!;
 
 		this.sprites.forEach((sprite) => {
 			const texture = sprite.texture;
 			const frame = sprite.frame;
-			offscreenCtx?.drawImage(
+			offscreenCtx.drawImage(
 				texture.getSourceImage() as HTMLImageElement,
 				frame.x,
 				frame.y,
@@ -362,13 +361,131 @@ export default class MainScene extends Scene {
 			);
 		});
 
-		const dataUrl = offscreenCanvas.toDataURL(`image/${fileType}`);
+		let fileType: string;
+		let dataUrl: string;
+
+		if (textureFormat === 'PNG-8') {
+			fileType = 'png';
+			dataUrl = this.quantizeTo8Bit(offscreenCanvas, offscreenCtx);
+		} else if (textureFormat === 'WebP') {
+			fileType = 'webp';
+			dataUrl = offscreenCanvas.toDataURL('image/webp', 0.9);
+		} else {
+			// PNG-32 (default)
+			fileType = 'png';
+			dataUrl = offscreenCanvas.toDataURL('image/png');
+		}
 
 		const snap = new Image();
 		snap.src = dataUrl;
 		snap.onload = () => {
 			this.handleSnapshot(snap, fileType, format);
 		};
+	}
+
+	/**
+	 * Quantize a 32-bit RGBA canvas down to 256 colors using median-cut,
+	 * then render the result back to produce a PNG with a reduced palette.
+	 */
+	private quantizeTo8Bit(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): string {
+		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+		const pixels = imageData.data;
+
+		// Collect unique non-transparent pixels as [r, g, b, a]
+		const colorPixels: number[][] = [];
+		for (let i = 0; i < pixels.length; i += 4) {
+			if (pixels[i + 3] > 0) {
+				colorPixels.push([pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]]);
+			}
+		}
+
+		// Median-cut quantization to 256 colors
+		const palette = this.medianCut(colorPixels, 256);
+
+		// Map each pixel to the nearest palette color
+		for (let i = 0; i < pixels.length; i += 4) {
+			if (pixels[i + 3] === 0) continue;
+
+			let bestDist = Infinity;
+			let bestColor = palette[0];
+
+			for (const color of palette) {
+				const dr = pixels[i] - color[0];
+				const dg = pixels[i + 1] - color[1];
+				const db = pixels[i + 2] - color[2];
+				const dist = dr * dr + dg * dg + db * db;
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestColor = color;
+				}
+			}
+
+			pixels[i] = bestColor[0];
+			pixels[i + 1] = bestColor[1];
+			pixels[i + 2] = bestColor[2];
+			// Preserve original alpha
+		}
+
+		ctx.putImageData(imageData, 0, 0);
+		return canvas.toDataURL('image/png');
+	}
+
+	private medianCut(pixels: number[][], maxColors: number): number[][] {
+		if (pixels.length === 0) return [[0, 0, 0, 255]];
+		if (pixels.length <= maxColors) {
+			return pixels;
+		}
+
+		type Bucket = number[][];
+		const buckets: Bucket[] = [pixels];
+
+		while (buckets.length < maxColors) {
+			// Find the bucket with the widest channel range
+			let bestBucketIdx = 0;
+			let bestRange = -1;
+			let bestChannel = 0;
+
+			for (let b = 0; b < buckets.length; b++) {
+				const bucket = buckets[b];
+				if (bucket.length < 2) continue;
+
+				for (let ch = 0; ch < 3; ch++) {
+					let min = 255, max = 0;
+					for (const px of bucket) {
+						if (px[ch] < min) min = px[ch];
+						if (px[ch] > max) max = px[ch];
+					}
+					const range = max - min;
+					if (range > bestRange) {
+						bestRange = range;
+						bestBucketIdx = b;
+						bestChannel = ch;
+					}
+				}
+			}
+
+			if (bestRange <= 0) break;
+
+			const bucket = buckets[bestBucketIdx];
+			bucket.sort((a, b) => a[bestChannel] - b[bestChannel]);
+			const mid = Math.floor(bucket.length / 2);
+
+			buckets[bestBucketIdx] = bucket.slice(0, mid);
+			buckets.push(bucket.slice(mid));
+		}
+
+		// Average each bucket to get the palette color
+		return buckets.map((bucket) => {
+			if (bucket.length === 0) return [0, 0, 0, 255];
+			let r = 0, g = 0, b = 0;
+			for (const px of bucket) {
+				r += px[0];
+				g += px[1];
+				b += px[2];
+			}
+			const len = bucket.length;
+			return [Math.round(r / len), Math.round(g / len), Math.round(b / len), 255];
+		});
 	}
 
 	private getAtlasMetadata(format: string, fileType: string) {
