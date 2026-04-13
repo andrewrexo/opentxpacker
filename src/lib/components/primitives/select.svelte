@@ -5,12 +5,14 @@
 		options = [],
 		value = $bindable(''),
 		label = '',
-		placeholder = 'Select option'
+		placeholder = 'Select option',
+		onchange
 	}: {
 		options: string[];
 		value: string;
 		label: string;
 		placeholder?: string;
+		onchange?: () => void;
 	} = $props();
 
 	$effect(() => {
@@ -20,6 +22,7 @@
 	function handleSelect(option: string) {
 		selected = option;
 		value = option;
+		onchange?.();
 	}
 </script>
 

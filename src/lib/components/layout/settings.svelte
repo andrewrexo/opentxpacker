@@ -5,9 +5,16 @@
 
 	let exportFormat = $state('Phaser 3');
 	let textureFormat = $state('PNG-32');
+	let atlasSize = $state('1024x1024');
 
 	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
+	const atlasSizeOptions = ['256x256', '512x512', '1024x1024', '2048x2048', '4096x4096'];
+
+	const handleAtlasSizeChange = () => {
+		const [w, h] = atlasSize.split('x').map(Number);
+		eventBus.emit('resizeAtlas', { width: w, height: h });
+	};
 
 	const handleExport = () => {
 		eventBus.emit('exportAtlas', {
@@ -23,6 +30,7 @@
 
 <div class="form-control h-[calc(100%-2rem)]">
 	<div class="grid grid-cols-1 gap-2 pb-4">
+		<Select label="Atlas Size" options={atlasSizeOptions} bind:value={atlasSize} onchange={handleAtlasSizeChange} />
 		<Select label="Texture Type" options={exportOptions} bind:value={exportFormat} />
 		<Select label="File Format" options={textureOptions} bind:value={textureFormat} />
 	</div>

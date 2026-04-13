@@ -35,6 +35,7 @@ type EventMap = {
 	loadProject: (data: ProjectData) => void;
 	requestManifest: () => void;
 	manifestData: (json: string) => void;
+	resizeAtlas: (size: { width: number; height: number }) => void;
 };
 
 type EventTypes = keyof EventMap;

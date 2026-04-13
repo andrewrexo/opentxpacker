@@ -154,12 +154,71 @@ export default class MainScene extends Scene {
 		EventBus.on('loadProject', (data) => {
 			this.loadProjectData(data);
 		});
+
+		EventBus.on('resizeAtlas', ({ width, height }) => {
+			this.resizeAtlasTo(width, height);
+		});
 	}
 
 	private drawAtlasBoundary() {
 		this.atlasBoundary = this.add.rectangle(0, 0, this.atlasWidth, this.atlasHeight, 0x666666, 0.2);
 		this.atlasBoundary.setStrokeStyle(4, 0x666666, 0.5);
 		this.atlasBoundary.setOrigin(0, 0);
+	}
+
+	private resizeAtlasTo(width: number, height: number) {
+		this.atlasWidth = width;
+		this.atlasHeight = height;
+
+		// Redraw boundary
+		this.atlasBoundary?.destroy();
+		this.drawAtlasBoundary();
+
+		// Re-pack all sprites
+		this.initializeAtlas();
+
+		const spritesToRepack = new Map(this.sprites);
+		this.sprites.forEach((sprite) => sprite.destroy());
+		this.sprites.clear();
+		this.clearHighlight();
+
+		if (spritesToRepack.size > 0) {
+			this.logo.setVisible(false);
+		}
+
+		spritesToRepack.forEach((oldSprite, name) => {
+			const position = this.findPosition(oldSprite.width, oldSprite.height);
+			if (!position) {
+				EventBus.emit('uploadResult', {
+					name,
+					success: false,
+					error: 'No space left in resized atlas'
+				});
+				return;
+			}
+
+			const sprite = this.add.sprite(position.x, position.y, name);
+			sprite.setOrigin(0, 0);
+			sprite.setInteractive();
+
+			sprite.on('pointerover', () => {
+				this.highlightSprite(name);
+				this.game.canvas.style.cursor = 'pointer';
+				EventBus.emit('hoverTextureCanvas', name);
+			});
+
+			sprite.on('pointerout', () => {
+				this.clearHighlight();
+				this.game.canvas.style.cursor = 'default';
+				EventBus.emit('hoverTextureCanvas', null);
+			});
+
+			this.sprites.set(name, sprite);
+		});
+
+		// Recenter camera
+		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
+		this.resize();
 	}
 
 	private initializeAtlas() {
