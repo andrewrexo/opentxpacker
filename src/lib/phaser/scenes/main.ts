@@ -141,6 +141,14 @@ export default class MainScene extends Scene {
 			console.log('exporting atlas', options);
 			this.exportAtlas({ ...options });
 		});
+
+		EventBus.on('saveProject', () => {
+			this.saveProject();
+		});
+
+		EventBus.on('loadProject', (data) => {
+			this.loadProjectData(data);
+		});
 	}
 
 	private drawAtlasBoundary() {
@@ -434,6 +442,132 @@ export default class MainScene extends Scene {
 		}
 		if (this.cursors.down.isDown) {
 			this.centerPoint.y += this.cameraSpeed;
+		}
+	}
+
+	private saveProject() {
+		const assets: Array<{
+			name: string;
+			dataUrl: string;
+			x: number;
+			y: number;
+			width: number;
+			height: number;
+		}> = [];
+
+		this.sprites.forEach((sprite, name) => {
+			const canvas = document.createElement('canvas');
+			canvas.width = sprite.width;
+			canvas.height = sprite.height;
+			const ctx = canvas.getContext('2d');
+			if (ctx) {
+				ctx.drawImage(
+					sprite.texture.getSourceImage() as HTMLImageElement,
+					0,
+					0,
+					sprite.width,
+					sprite.height
+				);
+				assets.push({
+					name,
+					dataUrl: canvas.toDataURL('image/png'),
+					x: sprite.x,
+					y: sprite.y,
+					width: sprite.width,
+					height: sprite.height
+				});
+			}
+		});
+
+		EventBus.emit('projectData', {
+			version: '1.0',
+			atlasWidth: this.atlasWidth,
+			atlasHeight: this.atlasHeight,
+			assets
+		});
+	}
+
+	private async loadProjectData(data: {
+		version: string;
+		atlasWidth: number;
+		atlasHeight: number;
+		assets: Array<{
+			name: string;
+			dataUrl: string;
+			x: number;
+			y: number;
+			width: number;
+			height: number;
+		}>;
+	}) {
+		// Clear existing sprites
+		this.sprites.forEach((sprite) => sprite.destroy());
+		this.sprites.clear();
+		this.clearHighlight();
+
+		// Reset atlas dimensions
+		this.atlasWidth = data.atlasWidth;
+		this.atlasHeight = data.atlasHeight;
+		this.atlasBoundary?.destroy();
+		this.drawAtlasBoundary();
+		this.initializeAtlas();
+
+		// Recenter camera
+		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
+		this.resize();
+
+		// Load each asset
+		for (const asset of data.assets) {
+			await new Promise<void>((resolve) => {
+				const image = new Image();
+				image.onload = () => {
+					if (this.textures.exists(asset.name)) {
+						this.textures.remove(asset.name);
+					}
+					this.textures.addImage(asset.name, image);
+
+					// Mark the space as used in freeRects
+					this.splitFreeRectangles({
+						x: asset.x,
+						y: asset.y,
+						width: asset.width,
+						height: asset.height
+					});
+
+					if (this.sprites.size === 0) {
+						this.logo.setVisible(false);
+					}
+
+					const sprite = this.add.sprite(asset.x, asset.y, asset.name);
+					sprite.setOrigin(0, 0);
+					sprite.setInteractive();
+
+					sprite.on('pointerover', () => {
+						this.highlightSprite(asset.name);
+						this.game.canvas.style.cursor = 'pointer';
+						EventBus.emit('hoverTextureCanvas', asset.name);
+					});
+
+					sprite.on('pointerout', () => {
+						this.clearHighlight();
+						this.game.canvas.style.cursor = 'default';
+						EventBus.emit('hoverTextureCanvas', null);
+					});
+
+					this.sprites.set(asset.name, sprite);
+					EventBus.emit('uploadResult', { name: asset.name, success: true });
+					resolve();
+				};
+				image.onerror = () => {
+					EventBus.emit('uploadResult', {
+						name: asset.name,
+						success: false,
+						error: 'Failed to load image from project file'
+					});
+					resolve();
+				};
+				image.src = asset.dataUrl;
+			});
 		}
 	}
 

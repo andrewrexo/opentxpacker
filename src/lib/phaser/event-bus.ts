@@ -9,6 +9,20 @@ interface UploadResult {
 	error?: string;
 }
 
+interface ProjectData {
+	version: string;
+	atlasWidth: number;
+	atlasHeight: number;
+	assets: Array<{
+		name: string;
+		dataUrl: string;
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	}>;
+}
+
 type EventMap = {
 	loadNewAssets: (assets: AssetData[]) => void;
 	uploadResult: (result: UploadResult) => void;
@@ -16,6 +30,9 @@ type EventMap = {
 	hoverTextureFileTree: (textureName: string) => void;
 	hoverTextureCanvas: (textureName: string | null) => void;
 	exportAtlas: (options: { format: string; textureFormat: string }) => void;
+	saveProject: () => void;
+	projectData: (data: ProjectData) => void;
+	loadProject: (data: ProjectData) => void;
 };
 
 type EventTypes = keyof EventMap;
