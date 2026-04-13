@@ -9,8 +9,18 @@ import {
 	type Rectangle
 } from '../packing';
 
+interface AtlasPage {
+	packer: MaxRectsPacker | BasicShelfPacker;
+	boundary: Phaser.GameObjects.Rectangle;
+	label: Phaser.GameObjects.Text;
+	offsetX: number;
+}
+
+const PAGE_GAP = 40; // px gap between pages in the scene
+
 export default class MainScene extends Scene {
 	private sprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+	private spritePages: Map<string, number> = new Map(); // sprite name -> page index
 	private logo!: Phaser.GameObjects.Image;
 	private resizeTimer: number | null = null;
 	private atlasWidth = 1024; // Default atlas size
@@ -19,14 +29,13 @@ export default class MainScene extends Scene {
 	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 	private centerPoint!: Phaser.Math.Vector2;
 	private currentHighlight?: Phaser.GameObjects.Rectangle;
-	private atlasBoundary?: Phaser.GameObjects.Rectangle;
+	private pages: AtlasPage[] = [];
 	private padding = 0;
 	private trimEnabled = false;
 	private trimData: Map<string, { offsetX: number; offsetY: number; origWidth: number; origHeight: number }> = new Map();
 	private originalImages: Map<string, HTMLImageElement> = new Map();
 	private packAlgorithm: PackingAlgorithm = 'MaxRects';
 	private packHeuristic: MaxRectsHeuristic = 'BestShortSideFit';
-	private packer!: MaxRectsPacker | BasicShelfPacker;
 
 	constructor() {
 		super({ key: 'main' });
@@ -40,14 +49,7 @@ export default class MainScene extends Scene {
 
 		this.logo = this.add.image(this.atlasWidth / 2, this.atlasHeight / 2, 'logo').setAlpha(0.5);
 
-		this.drawAtlasBoundary();
-		this.packer = createPacker({
-			algorithm: this.packAlgorithm,
-			heuristic: this.packHeuristic,
-			width: this.atlasWidth,
-			height: this.atlasHeight,
-			padding: this.padding
-		});
+		this.addPage();
 
 		if (this.input.keyboard) {
 			this.cursors = this.input.keyboard.createCursorKeys();
@@ -97,15 +99,17 @@ export default class MainScene extends Scene {
 								const texWidth = textureSource.width;
 								const texHeight = textureSource.height;
 
-								const position = this.packer.findPosition(texWidth, texHeight);
+								const position = this.findPositionMultiPage(texWidth, texHeight);
 								if (!position) {
 									EventBus.emit('uploadResult', {
 										name,
 										success: false,
-										error: 'No space left in atlas'
+										error: 'Sprite too large for atlas page'
 									});
 									return;
 								}
+
+								this.spritePages.set(name, position.pageIndex);
 
 								if (this.sprites.size === 0) {
 									this.logo.setVisible(false);
@@ -199,7 +203,6 @@ export default class MainScene extends Scene {
 
 		EventBus.on('setPadding', (padding) => {
 			this.padding = padding;
-			this.recreatePacker();
 			this.repackAllSprites();
 		});
 
@@ -211,13 +214,11 @@ export default class MainScene extends Scene {
 
 		EventBus.on('setAlgorithm', (algorithm) => {
 			this.packAlgorithm = algorithm as PackingAlgorithm;
-			this.recreatePacker();
 			this.repackAllSprites();
 		});
 
 		EventBus.on('setHeuristic', (heuristic) => {
 			this.packHeuristic = heuristic as MaxRectsHeuristic;
-			this.recreatePacker();
 			this.repackAllSprites();
 		});
 
@@ -230,6 +231,7 @@ export default class MainScene extends Scene {
 			if (sprite) {
 				sprite.destroy();
 				this.sprites.delete(name);
+				this.spritePages.delete(name);
 				this.originalImages.delete(name);
 				this.trimData.delete(name);
 				if (this.textures.exists(name)) {
@@ -246,10 +248,69 @@ export default class MainScene extends Scene {
 		});
 	}
 
-	private drawAtlasBoundary() {
-		this.atlasBoundary = this.add.rectangle(0, 0, this.atlasWidth, this.atlasHeight, 0x666666, 0.2);
-		this.atlasBoundary.setStrokeStyle(4, 0x666666, 0.5);
-		this.atlasBoundary.setOrigin(0, 0);
+	private addPage(): AtlasPage {
+		const pageIndex = this.pages.length;
+		const offsetX = pageIndex * (this.atlasWidth + PAGE_GAP);
+
+		const packer = createPacker({
+			algorithm: this.packAlgorithm,
+			heuristic: this.packHeuristic,
+			width: this.atlasWidth,
+			height: this.atlasHeight,
+			padding: this.padding
+		});
+
+		const boundary = this.add.rectangle(offsetX, 0, this.atlasWidth, this.atlasHeight, 0x666666, 0.2);
+		boundary.setStrokeStyle(4, 0x666666, 0.5);
+		boundary.setOrigin(0, 0);
+
+		const label = this.add.text(offsetX + 4, -20, `Page ${pageIndex + 1}`, {
+			fontSize: '14px',
+			color: '#999999'
+		});
+
+		const page: AtlasPage = { packer, boundary, label, offsetX };
+		this.pages.push(page);
+		return page;
+	}
+
+	private clearAllPages() {
+		for (const page of this.pages) {
+			page.boundary.destroy();
+			page.label.destroy();
+		}
+		this.pages = [];
+		this.spritePages.clear();
+	}
+
+	/**
+	 * Find a position across all pages, creating a new page if needed.
+	 */
+	private findPositionMultiPage(width: number, height: number): { x: number; y: number; pageIndex: number } | null {
+		// Try existing pages first
+		for (let i = 0; i < this.pages.length; i++) {
+			const result = this.pages[i].packer.findPosition(width, height);
+			if (result) {
+				return {
+					x: result.x + this.pages[i].offsetX,
+					y: result.y,
+					pageIndex: i
+				};
+			}
+		}
+
+		// No space — create a new page
+		const newPage = this.addPage();
+		const result = newPage.packer.findPosition(width, height);
+		if (result) {
+			return {
+				x: result.x + newPage.offsetX,
+				y: result.y,
+				pageIndex: this.pages.length - 1
+			};
+		}
+
+		return null; // Sprite too large for a single page
 	}
 
 	private autoSizeAtlas() {
@@ -265,26 +326,23 @@ export default class MainScene extends Scene {
 		const pot = [64, 128, 256, 512, 1024, 2048, 4096, 8192];
 
 		for (const size of pot) {
-			// Try square first
 			if (this.tryPackAll(sizes, size, size)) {
 				this.atlasWidth = size;
 				this.atlasHeight = size;
-				this.atlasBoundary?.destroy();
-				this.drawAtlasBoundary();
-				this.packer.resize(size, size);
+				this.clearAllPages();
+				this.addPage();
 				this.repackAllSprites();
 				EventBus.emit('atlasSizeChanged', `${size}x${size}`);
 				return;
 			}
 		}
 
-		// If nothing worked, use max size
+		// If nothing worked, use max size (multi-page will handle overflow)
 		const max = pot[pot.length - 1];
 		this.atlasWidth = max;
 		this.atlasHeight = max;
-		this.atlasBoundary?.destroy();
-		this.drawAtlasBoundary();
-		this.packer.resize(max, max);
+		this.clearAllPages();
+		this.addPage();
 		this.repackAllSprites();
 		EventBus.emit('atlasSizeChanged', `${max}x${max}`);
 	}
@@ -317,22 +375,11 @@ export default class MainScene extends Scene {
 		return true;
 	}
 
-	private recreatePacker() {
-		this.packer = createPacker({
-			algorithm: this.packAlgorithm,
-			heuristic: this.packHeuristic,
-			width: this.atlasWidth,
-			height: this.atlasHeight,
-			padding: this.padding
-		});
-	}
-
 	private resizeAtlasTo(width: number, height: number) {
 		this.atlasWidth = width;
 		this.atlasHeight = height;
-		this.atlasBoundary?.destroy();
-		this.drawAtlasBoundary();
-		this.packer.resize(width, height);
+		this.clearAllPages();
+		this.addPage();
 		this.repackAllSprites();
 	}
 
@@ -344,7 +391,8 @@ export default class MainScene extends Scene {
 		this.sprites.forEach((sprite) => sprite.destroy());
 		this.sprites.clear();
 		this.clearHighlight();
-		this.packer.init();
+		this.clearAllPages();
+		this.addPage();
 
 		if (spriteNames.length > 0) {
 			this.logo.setVisible(false);
@@ -383,15 +431,17 @@ export default class MainScene extends Scene {
 			const texWidth = textureSource.width;
 			const texHeight = textureSource.height;
 
-			const position = this.packer.findPosition(texWidth, texHeight);
+			const position = this.findPositionMultiPage(texWidth, texHeight);
 			if (!position) {
 				EventBus.emit('uploadResult', {
 					name,
 					success: false,
-					error: 'No space left in atlas'
+					error: 'Sprite too large for atlas page'
 				});
 				continue;
 			}
+
+			this.spritePages.set(name, position.pageIndex);
 
 			const sprite = this.add.sprite(position.x, position.y, name);
 			sprite.setOrigin(0, 0);
@@ -412,12 +462,13 @@ export default class MainScene extends Scene {
 			this.sprites.set(name, sprite);
 		}
 
-		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
+		this.centerPoint.set(this.getTotalWidth() / 2, this.atlasHeight / 2);
 		this.resize();
 	}
 
 	private repackAllSprites() {
-		this.packer.init();
+		this.clearAllPages();
+		this.addPage();
 
 		const spritesToRepack = new Map(this.sprites);
 		this.sprites.forEach((sprite) => sprite.destroy());
@@ -429,15 +480,17 @@ export default class MainScene extends Scene {
 		}
 
 		spritesToRepack.forEach((oldSprite, name) => {
-			const position = this.packer.findPosition(oldSprite.width, oldSprite.height);
+			const position = this.findPositionMultiPage(oldSprite.width, oldSprite.height);
 			if (!position) {
 				EventBus.emit('uploadResult', {
 					name,
 					success: false,
-					error: 'No space left in atlas'
+					error: 'Sprite too large for atlas page'
 				});
 				return;
 			}
+
+			this.spritePages.set(name, position.pageIndex);
 
 			const sprite = this.add.sprite(position.x, position.y, name);
 			sprite.setOrigin(0, 0);
@@ -458,7 +511,7 @@ export default class MainScene extends Scene {
 			this.sprites.set(name, sprite);
 		});
 
-		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
+		this.centerPoint.set(this.getTotalWidth() / 2, this.atlasHeight / 2);
 		this.resize();
 	}
 
@@ -473,7 +526,8 @@ export default class MainScene extends Scene {
 	};
 
 	private calculateOptimalZoom(containerWidth: number, containerHeight: number): number {
-		const zoomX = containerWidth / this.atlasWidth;
+		const totalWidth = this.getTotalWidth();
+		const zoomX = containerWidth / totalWidth;
 		const zoomY = containerHeight / this.atlasHeight;
 		const idealZoom = Math.min(zoomX, zoomY);
 
@@ -485,82 +539,78 @@ export default class MainScene extends Scene {
 		return optimalZoom;
 	}
 
-	private async handleSnapshot(snap: HTMLImageElement, fileType: string, format: string) {
-		const dataUrl = snap.src;
-		const metadata = this.getAtlasMetadata(format, fileType);
+	async exportAtlas(options: { format: string; textureFormat: string }) {
+		const { format, textureFormat } = options;
+		const fileType = textureFormat === 'WebP' ? 'webp' : 'png';
+		const pageCount = this.pages.length;
 
-		const imageBlob = await (await fetch(dataUrl)).blob();
-		const imageFile = new File([imageBlob], `atlas.${fileType}`, {
-			type: `image/${fileType}`
-		});
+		const downloadLink = document.createElement('a');
+
+		for (let pageIdx = 0; pageIdx < pageCount; pageIdx++) {
+			const page = this.pages[pageIdx];
+
+			const offscreenCanvas = document.createElement('canvas');
+			offscreenCanvas.width = this.atlasWidth;
+			offscreenCanvas.height = this.atlasHeight;
+			const offscreenCtx = offscreenCanvas.getContext('2d')!;
+
+			// Draw only sprites belonging to this page
+			this.sprites.forEach((sprite, name) => {
+				if (this.spritePages.get(name) !== pageIdx) return;
+
+				const texture = sprite.texture;
+				const frame = sprite.frame;
+				// Sprite x is in scene coordinates, subtract page offset for canvas coords
+				offscreenCtx.drawImage(
+					texture.getSourceImage() as HTMLImageElement,
+					frame.x,
+					frame.y,
+					frame.width,
+					frame.height,
+					sprite.x - page.offsetX,
+					sprite.y,
+					sprite.width,
+					sprite.height
+				);
+			});
+
+			let dataUrl: string;
+			if (textureFormat === 'PNG-8') {
+				dataUrl = this.quantizeTo8Bit(offscreenCanvas, offscreenCtx);
+			} else if (textureFormat === 'WebP') {
+				dataUrl = offscreenCanvas.toDataURL('image/webp', 0.9);
+			} else {
+				dataUrl = offscreenCanvas.toDataURL('image/png');
+			}
+
+			// Download image
+			const suffix = pageCount > 1 ? `-${pageIdx}` : '';
+			const imageBlob = await (await fetch(dataUrl)).blob();
+			const imageFile = new File([imageBlob], `atlas${suffix}.${fileType}`, {
+				type: `image/${fileType}`
+			});
+			const imageUrl = URL.createObjectURL(imageFile);
+			downloadLink.href = imageUrl;
+			downloadLink.download = imageFile.name;
+			downloadLink.click();
+			URL.revokeObjectURL(imageUrl);
+		}
+
+		// Download metadata
+		const metadata = this.getAtlasMetadata(format, fileType);
 		const jsonBlob = new Blob([JSON.stringify(metadata, null, 2)], {
 			type: 'application/json'
 		});
 		const jsonFile = new File([jsonBlob], 'atlas.json', {
 			type: 'application/json'
 		});
-
-		const imageUrl = URL.createObjectURL(imageFile);
 		const jsonUrl = URL.createObjectURL(jsonFile);
-
-		const downloadLink = document.createElement('a');
-		downloadLink.href = imageUrl;
-		downloadLink.download = imageFile.name;
-		downloadLink.click();
-
 		downloadLink.href = jsonUrl;
 		downloadLink.download = jsonFile.name;
 		downloadLink.click();
 
 		downloadLink.remove();
-		URL.revokeObjectURL(imageUrl);
 		URL.revokeObjectURL(jsonUrl);
-	}
-
-	async exportAtlas(options: { format: string; textureFormat: string }) {
-		const { format, textureFormat } = options;
-
-		const offscreenCanvas = document.createElement('canvas');
-		offscreenCanvas.width = this.atlasWidth;
-		offscreenCanvas.height = this.atlasHeight;
-		const offscreenCtx = offscreenCanvas.getContext('2d')!;
-
-		this.sprites.forEach((sprite) => {
-			const texture = sprite.texture;
-			const frame = sprite.frame;
-			offscreenCtx.drawImage(
-				texture.getSourceImage() as HTMLImageElement,
-				frame.x,
-				frame.y,
-				frame.width,
-				frame.height,
-				sprite.x,
-				sprite.y,
-				sprite.width,
-				sprite.height
-			);
-		});
-
-		let fileType: string;
-		let dataUrl: string;
-
-		if (textureFormat === 'PNG-8') {
-			fileType = 'png';
-			dataUrl = this.quantizeTo8Bit(offscreenCanvas, offscreenCtx);
-		} else if (textureFormat === 'WebP') {
-			fileType = 'webp';
-			dataUrl = offscreenCanvas.toDataURL('image/webp', 0.9);
-		} else {
-			// PNG-32 (default)
-			fileType = 'png';
-			dataUrl = offscreenCanvas.toDataURL('image/png');
-		}
-
-		const snap = new Image();
-		snap.src = dataUrl;
-		snap.onload = () => {
-			this.handleSnapshot(snap, fileType, format);
-		};
 	}
 
 	/**
@@ -669,115 +719,118 @@ export default class MainScene extends Scene {
 	}
 
 	private getAtlasMetadata(format: string, fileType: string) {
-		const imageFilename = `atlas.${fileType}`;
+		const pageCount = this.pages.length;
+		const suffix = (i: number) => pageCount > 1 ? `-${i}` : '';
 
 		if (format === 'Multiatlas') {
-			return this.getMultiatlasMetadata(imageFilename);
+			return this.getMultiatlasMetadata(fileType, suffix);
 		} else if (format === 'JSON') {
-			return this.getGenericJsonMetadata(imageFilename);
+			return this.getGenericJsonMetadata(fileType, suffix);
 		}
 
-		return this.getPhaser3Metadata(imageFilename);
+		return this.getPhaser3Metadata(fileType, suffix);
 	}
 
-	private getPhaser3Metadata(imageFilename: string) {
-		const frames: Record<
-			string,
-			{
-				frame: { x: number; y: number; w: number; h: number };
-				rotated: boolean;
-				trimmed: boolean;
-				spriteSourceSize: { x: number; y: number; w: number; h: number };
-				sourceSize: { w: number; h: number };
-			}
-		> = {};
-
-		this.sprites.forEach((sprite, name) => {
-			const trim = this.trimData.get(name);
-			const trimmed = !!trim;
-
-			frames[name] = {
-				frame: {
-					x: sprite.x,
-					y: sprite.y,
-					w: sprite.width,
-					h: sprite.height
-				},
-				rotated: false,
-				trimmed,
-				spriteSourceSize: {
-					x: trim?.offsetX ?? 0,
-					y: trim?.offsetY ?? 0,
-					w: sprite.width,
-					h: sprite.height
-				},
-				sourceSize: {
-					w: trim?.origWidth ?? sprite.width,
-					h: trim?.origHeight ?? sprite.height
-				}
-			};
-		});
-
-		return {
-			frames,
-			meta: {
-				app: 'OpenTXPacker',
-				version: '1.0',
-				image: imageFilename,
-				format: 'RGBA8888',
-				size: { w: this.atlasWidth, h: this.atlasHeight },
-				scale: 1
-			}
-		};
+	/** Get the page-local x for a sprite (subtract page offset). */
+	private spriteLocalX(name: string, sprite: Phaser.GameObjects.Sprite): number {
+		const pageIdx = this.spritePages.get(name) ?? 0;
+		const page = this.pages[pageIdx];
+		return sprite.x - (page?.offsetX ?? 0);
 	}
 
-	private getMultiatlasMetadata(imageFilename: string) {
-		const frames: Array<{
-			filename: string;
-			frame: { x: number; y: number; w: number; h: number };
-			rotated: boolean;
-			trimmed: boolean;
-			sourceSize: { w: number; h: number };
-			spriteSourceSize: { x: number; y: number; w: number; h: number };
-		}> = [];
+	private getPhaser3Metadata(fileType: string, suffix: (i: number) => string) {
+		// For single page, standard format. For multi-page, wrap in pages array.
+		const pageCount = this.pages.length;
 
-		this.sprites.forEach((sprite, name) => {
-			const trim = this.trimData.get(name);
-			const trimmed = !!trim;
-
-			frames.push({
-				filename: name,
-				frame: {
-					x: sprite.x,
-					y: sprite.y,
-					w: sprite.width,
-					h: sprite.height
-				},
-				rotated: false,
-				trimmed,
-				sourceSize: {
-					w: trim?.origWidth ?? sprite.width,
-					h: trim?.origHeight ?? sprite.height
-				},
-				spriteSourceSize: {
-					x: trim?.offsetX ?? 0,
-					y: trim?.offsetY ?? 0,
-					w: sprite.width,
-					h: sprite.height
-				}
+		if (pageCount <= 1) {
+			const frames: Record<string, object> = {};
+			this.sprites.forEach((sprite, name) => {
+				const trim = this.trimData.get(name);
+				const trimmed = !!trim;
+				frames[name] = {
+					frame: { x: this.spriteLocalX(name, sprite), y: sprite.y, w: sprite.width, h: sprite.height },
+					rotated: false,
+					trimmed,
+					spriteSourceSize: { x: trim?.offsetX ?? 0, y: trim?.offsetY ?? 0, w: sprite.width, h: sprite.height },
+					sourceSize: { w: trim?.origWidth ?? sprite.width, h: trim?.origHeight ?? sprite.height }
+				};
 			});
-		});
-
-		return {
-			textures: [
-				{
-					image: imageFilename,
+			return {
+				frames,
+				meta: {
+					app: 'OpenTXPacker',
+					version: '1.0',
+					image: `atlas.${fileType}`,
 					format: 'RGBA8888',
 					size: { w: this.atlasWidth, h: this.atlasHeight },
-					scale: 1,
-					frames
+					scale: 1
 				}
-			],
+			};
+		}
+
+		// Multi-page: return an array of atlas objects
+		const atlases = [];
+		for (let p = 0; p < pageCount; p++) {
+			const frames: Record<string, object> = {};
+			this.sprites.forEach((sprite, name) => {
+				if (this.spritePages.get(name) !== p) return;
+				const trim = this.trimData.get(name);
+				const trimmed = !!trim;
+				frames[name] = {
+					frame: { x: this.spriteLocalX(name, sprite), y: sprite.y, w: sprite.width, h: sprite.height },
+					rotated: false,
+					trimmed,
+					spriteSourceSize: { x: trim?.offsetX ?? 0, y: trim?.offsetY ?? 0, w: sprite.width, h: sprite.height },
+					sourceSize: { w: trim?.origWidth ?? sprite.width, h: trim?.origHeight ?? sprite.height }
+				};
+			});
+			atlases.push({
+				frames,
+				meta: {
+					app: 'OpenTXPacker',
+					version: '1.0',
+					image: `atlas${suffix(p)}.${fileType}`,
+					format: 'RGBA8888',
+					size: { w: this.atlasWidth, h: this.atlasHeight },
+					scale: 1
+				}
+			});
+		}
+		return atlases;
+	}
+
+	private getMultiatlasMetadata(fileType: string, suffix: (i: number) => string) {
+		const textures = [];
+
+		for (let p = 0; p < this.pages.length; p++) {
+			const frames: Array<object> = [];
+
+			this.sprites.forEach((sprite, name) => {
+				if (this.spritePages.get(name) !== p) return;
+				const trim = this.trimData.get(name);
+				const trimmed = !!trim;
+
+				frames.push({
+					filename: name,
+					frame: { x: this.spriteLocalX(name, sprite), y: sprite.y, w: sprite.width, h: sprite.height },
+					rotated: false,
+					trimmed,
+					sourceSize: { w: trim?.origWidth ?? sprite.width, h: trim?.origHeight ?? sprite.height },
+					spriteSourceSize: { x: trim?.offsetX ?? 0, y: trim?.offsetY ?? 0, w: sprite.width, h: sprite.height }
+				});
+			});
+
+			textures.push({
+				image: `atlas${suffix(p)}.${fileType}`,
+				format: 'RGBA8888',
+				size: { w: this.atlasWidth, h: this.atlasHeight },
+				scale: 1,
+				frames
+			});
+		}
+
+		return {
+			textures,
 			meta: {
 				app: 'OpenTXPacker',
 				version: '1.0'
@@ -785,41 +838,50 @@ export default class MainScene extends Scene {
 		};
 	}
 
-	private getGenericJsonMetadata(imageFilename: string) {
-		const frames: Array<{
-			name: string;
-			x: number;
-			y: number;
-			width: number;
-			height: number;
-		}> = [];
+	private getGenericJsonMetadata(fileType: string, suffix: (i: number) => string) {
+		const pages = [];
 
-		this.sprites.forEach((sprite, name) => {
-			frames.push({
-				name,
-				x: sprite.x,
-				y: sprite.y,
-				width: sprite.width,
-				height: sprite.height
+		for (let p = 0; p < this.pages.length; p++) {
+			const frames: Array<object> = [];
+
+			this.sprites.forEach((sprite, name) => {
+				if (this.spritePages.get(name) !== p) return;
+				frames.push({
+					name,
+					x: this.spriteLocalX(name, sprite),
+					y: sprite.y,
+					width: sprite.width,
+					height: sprite.height
+				});
 			});
-		});
 
-		return {
-			image: imageFilename,
-			width: this.atlasWidth,
-			height: this.atlasHeight,
-			frames
-		};
+			pages.push({
+				image: `atlas${suffix(p)}.${fileType}`,
+				width: this.atlasWidth,
+				height: this.atlasHeight,
+				frames
+			});
+		}
+
+		// Single page: return flat structure for backwards compat
+		if (pages.length === 1) return pages[0];
+		return { pages };
+	}
+
+	private getTotalWidth(): number {
+		if (this.pages.length <= 1) return this.atlasWidth;
+		return this.pages.length * this.atlasWidth + (this.pages.length - 1) * PAGE_GAP;
 	}
 
 	resize() {
 		const { width, height } = this.scale;
 		const padding = 50;
+		const totalWidth = this.getTotalWidth();
 
 		const zoom = this.calculateOptimalZoom(width, height);
 		this.cameras.main.setZoom(zoom);
 
-		const centerX = (width / zoom - this.atlasWidth) / 2;
+		const centerX = (width / zoom - totalWidth) / 2;
 		const centerY = (height / zoom - this.atlasHeight) / 2;
 
 		this.cameras.main.setScroll(
@@ -908,12 +970,11 @@ export default class MainScene extends Scene {
 		// Reset atlas dimensions
 		this.atlasWidth = data.atlasWidth;
 		this.atlasHeight = data.atlasHeight;
-		this.atlasBoundary?.destroy();
-		this.drawAtlasBoundary();
-		this.packer.resize(data.atlasWidth, data.atlasHeight);
+		this.clearAllPages();
+		this.addPage();
 
 		// Recenter camera
-		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
+		this.centerPoint.set(this.getTotalWidth() / 2, this.atlasHeight / 2);
 		this.resize();
 
 		// Load each asset
@@ -926,8 +987,8 @@ export default class MainScene extends Scene {
 					}
 					this.textures.addImage(asset.name, image);
 
-					// Mark the space as used in the packer
-					this.packer.markUsed({
+					// Mark the space as used in the first page's packer
+					this.pages[0]?.packer.markUsed({
 						x: asset.x,
 						y: asset.y,
 						width: asset.width,
