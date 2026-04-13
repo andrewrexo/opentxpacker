@@ -39,6 +39,8 @@ type EventMap = {
 	setPadding: (padding: number) => void;
 	removeSprite: (name: string) => void;
 	setTrimEnabled: (enabled: boolean) => void;
+	setAlgorithm: (algorithm: string) => void;
+	setHeuristic: (heuristic: string) => void;
 };
 
 type EventTypes = keyof EventMap;

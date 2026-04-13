@@ -8,11 +8,21 @@
 	let atlasSize = $state('1024x1024');
 	let spritePadding = $state('0');
 	let trimTransparency = $state(false);
+	let packAlgorithm = $state('MaxRects');
+	let packHeuristic = $state('BestShortSideFit');
 
 	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
 	const atlasSizeOptions = ['256x256', '512x512', '1024x1024', '2048x2048', '4096x4096'];
 	const paddingOptions = ['0', '1', '2', '4', '8'];
+	const algorithmOptions = ['MaxRects', 'Basic'];
+	const heuristicOptions = [
+		'BestShortSideFit',
+		'BestLongSideFit',
+		'BestAreaFit',
+		'BottomLeftRule',
+		'ContactPointRule'
+	];
 
 	const handleAtlasSizeChange = () => {
 		const [w, h] = atlasSize.split('x').map(Number);
@@ -25,6 +35,14 @@
 
 	const handleTrimChange = () => {
 		eventBus.emit('setTrimEnabled', trimTransparency);
+	};
+
+	const handleAlgorithmChange = () => {
+		eventBus.emit('setAlgorithm', packAlgorithm);
+	};
+
+	const handleHeuristicChange = () => {
+		eventBus.emit('setHeuristic', packHeuristic);
 	};
 
 	const handleExport = () => {
@@ -41,6 +59,10 @@
 
 <div class="form-control h-[calc(100%-2rem)]">
 	<div class="grid grid-cols-1 gap-2 pb-4">
+		<Select label="Algorithm" options={algorithmOptions} bind:value={packAlgorithm} onchange={handleAlgorithmChange} />
+		{#if packAlgorithm === 'MaxRects'}
+			<Select label="Heuristic" options={heuristicOptions} bind:value={packHeuristic} onchange={handleHeuristicChange} />
+		{/if}
 		<Select label="Atlas Size" options={atlasSizeOptions} bind:value={atlasSize} onchange={handleAtlasSizeChange} />
 		<Select label="Padding" options={paddingOptions} bind:value={spritePadding} onchange={handlePaddingChange} />
 		<label class="label cursor-pointer justify-start gap-3 px-0">

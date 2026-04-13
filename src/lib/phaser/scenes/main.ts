@@ -1,12 +1,13 @@
 import { Scene } from 'phaser';
 import EventBus from '../event-bus';
-
-interface Rectangle {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-}
+import {
+	createPacker,
+	MaxRectsPacker,
+	BasicShelfPacker,
+	type PackingAlgorithm,
+	type MaxRectsHeuristic,
+	type Rectangle
+} from '../packing';
 
 export default class MainScene extends Scene {
 	private sprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
@@ -14,7 +15,6 @@ export default class MainScene extends Scene {
 	private resizeTimer: number | null = null;
 	private atlasWidth = 1024; // Default atlas size
 	private atlasHeight = 1024;
-	private freeRects: Rectangle[] = [];
 	private cameraSpeed = 10;
 	private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
 	private centerPoint!: Phaser.Math.Vector2;
@@ -24,6 +24,9 @@ export default class MainScene extends Scene {
 	private trimEnabled = false;
 	private trimData: Map<string, { offsetX: number; offsetY: number; origWidth: number; origHeight: number }> = new Map();
 	private originalImages: Map<string, HTMLImageElement> = new Map();
+	private packAlgorithm: PackingAlgorithm = 'MaxRects';
+	private packHeuristic: MaxRectsHeuristic = 'BestShortSideFit';
+	private packer!: MaxRectsPacker | BasicShelfPacker;
 
 	constructor() {
 		super({ key: 'main' });
@@ -38,7 +41,13 @@ export default class MainScene extends Scene {
 		this.logo = this.add.image(this.atlasWidth / 2, this.atlasHeight / 2, 'logo').setAlpha(0.5);
 
 		this.drawAtlasBoundary();
-		this.initializeAtlas();
+		this.packer = createPacker({
+			algorithm: this.packAlgorithm,
+			heuristic: this.packHeuristic,
+			width: this.atlasWidth,
+			height: this.atlasHeight,
+			padding: this.padding
+		});
 
 		if (this.input.keyboard) {
 			this.cursors = this.input.keyboard.createCursorKeys();
@@ -88,7 +97,7 @@ export default class MainScene extends Scene {
 								const texWidth = textureSource.width;
 								const texHeight = textureSource.height;
 
-								const position = this.findPosition(texWidth, texHeight);
+								const position = this.packer.findPosition(texWidth, texHeight);
 								if (!position) {
 									EventBus.emit('uploadResult', {
 										name,
@@ -190,6 +199,7 @@ export default class MainScene extends Scene {
 
 		EventBus.on('setPadding', (padding) => {
 			this.padding = padding;
+			this.recreatePacker();
 			this.repackAllSprites();
 		});
 
@@ -197,6 +207,18 @@ export default class MainScene extends Scene {
 			this.trimEnabled = enabled;
 			this.trimData.clear();
 			this.retextureAndRepack();
+		});
+
+		EventBus.on('setAlgorithm', (algorithm) => {
+			this.packAlgorithm = algorithm as PackingAlgorithm;
+			this.recreatePacker();
+			this.repackAllSprites();
+		});
+
+		EventBus.on('setHeuristic', (heuristic) => {
+			this.packHeuristic = heuristic as MaxRectsHeuristic;
+			this.recreatePacker();
+			this.repackAllSprites();
 		});
 
 		EventBus.on('removeSprite', (name) => {
@@ -226,11 +248,22 @@ export default class MainScene extends Scene {
 		this.atlasBoundary.setOrigin(0, 0);
 	}
 
+	private recreatePacker() {
+		this.packer = createPacker({
+			algorithm: this.packAlgorithm,
+			heuristic: this.packHeuristic,
+			width: this.atlasWidth,
+			height: this.atlasHeight,
+			padding: this.padding
+		});
+	}
+
 	private resizeAtlasTo(width: number, height: number) {
 		this.atlasWidth = width;
 		this.atlasHeight = height;
 		this.atlasBoundary?.destroy();
 		this.drawAtlasBoundary();
+		this.packer.resize(width, height);
 		this.repackAllSprites();
 	}
 
@@ -242,7 +275,7 @@ export default class MainScene extends Scene {
 		this.sprites.forEach((sprite) => sprite.destroy());
 		this.sprites.clear();
 		this.clearHighlight();
-		this.initializeAtlas();
+		this.packer.init();
 
 		if (spriteNames.length > 0) {
 			this.logo.setVisible(false);
@@ -281,7 +314,7 @@ export default class MainScene extends Scene {
 			const texWidth = textureSource.width;
 			const texHeight = textureSource.height;
 
-			const position = this.findPosition(texWidth, texHeight);
+			const position = this.packer.findPosition(texWidth, texHeight);
 			if (!position) {
 				EventBus.emit('uploadResult', {
 					name,
@@ -315,7 +348,7 @@ export default class MainScene extends Scene {
 	}
 
 	private repackAllSprites() {
-		this.initializeAtlas();
+		this.packer.init();
 
 		const spritesToRepack = new Map(this.sprites);
 		this.sprites.forEach((sprite) => sprite.destroy());
@@ -327,7 +360,7 @@ export default class MainScene extends Scene {
 		}
 
 		spritesToRepack.forEach((oldSprite, name) => {
-			const position = this.findPosition(oldSprite.width, oldSprite.height);
+			const position = this.packer.findPosition(oldSprite.width, oldSprite.height);
 			if (!position) {
 				EventBus.emit('uploadResult', {
 					name,
@@ -358,141 +391,6 @@ export default class MainScene extends Scene {
 
 		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
 		this.resize();
-	}
-
-	private initializeAtlas() {
-		this.freeRects = [
-			{
-				x: 0,
-				y: 0,
-				width: this.atlasWidth,
-				height: this.atlasHeight
-			}
-		];
-	}
-
-	private findPosition(width: number, height: number): Rectangle | null {
-		const paddedWidth = width + this.padding * 2;
-		const paddedHeight = height + this.padding * 2;
-
-		// Sort free rectangles by area to try smaller spaces first
-		this.freeRects.sort((a, b) => a.width * a.height - b.width * b.height);
-
-		for (const freeRect of this.freeRects) {
-			if (freeRect.width >= paddedWidth && freeRect.height >= paddedHeight) {
-				// Reserve the full padded area in the free rect tracker
-				const paddedRect = {
-					x: freeRect.x,
-					y: freeRect.y,
-					width: paddedWidth,
-					height: paddedHeight
-				};
-
-				this.splitFreeRectangles(paddedRect);
-
-				// Return the inner position (offset by padding)
-				return {
-					x: freeRect.x + this.padding,
-					y: freeRect.y + this.padding,
-					width,
-					height
-				};
-			}
-		}
-
-		return null;
-	}
-
-	private splitFreeRectangles(usedRect: Rectangle) {
-		const newFreeRects: Rectangle[] = [];
-
-		for (let i = 0; i < this.freeRects.length; i++) {
-			const freeRect = this.freeRects[i];
-			if (this.isIntersecting(usedRect, freeRect)) {
-				if (freeRect.x < usedRect.x + usedRect.width && freeRect.x + freeRect.width > usedRect.x) {
-					// Space above
-					if (freeRect.y < usedRect.y) {
-						newFreeRects.push({
-							x: freeRect.x,
-							y: freeRect.y,
-							width: freeRect.width,
-							height: usedRect.y - freeRect.y
-						});
-					}
-					// Space below
-					if (freeRect.y + freeRect.height > usedRect.y + usedRect.height) {
-						newFreeRects.push({
-							x: freeRect.x,
-							y: usedRect.y + usedRect.height,
-							width: freeRect.width,
-							height: freeRect.y + freeRect.height - (usedRect.y + usedRect.height)
-						});
-					}
-				}
-
-				if (
-					freeRect.y < usedRect.y + usedRect.height &&
-					freeRect.y + freeRect.height > usedRect.y
-				) {
-					// Space to the left
-					if (freeRect.x < usedRect.x) {
-						newFreeRects.push({
-							x: freeRect.x,
-							y: freeRect.y,
-							width: usedRect.x - freeRect.x,
-							height: freeRect.height
-						});
-					}
-					// Space to the right
-					if (freeRect.x + freeRect.width > usedRect.x + usedRect.width) {
-						newFreeRects.push({
-							x: usedRect.x + usedRect.width,
-							y: freeRect.y,
-							width: freeRect.x + freeRect.width - (usedRect.x + usedRect.width),
-							height: freeRect.height
-						});
-					}
-				}
-			} else {
-				newFreeRects.push(freeRect);
-			}
-		}
-
-		// Remove any rectangles that are contained within others
-		this.freeRects = this.mergeFreeRectangles(newFreeRects);
-	}
-
-	private mergeFreeRectangles(rects: Rectangle[]): Rectangle[] {
-		const filtered = rects.filter((rect) => rect.width > 0 && rect.height > 0);
-
-		for (let i = filtered.length - 1; i >= 0; i--) {
-			for (let j = 0; j < filtered.length; j++) {
-				if (i !== j && this.isContained(filtered[i], filtered[j])) {
-					filtered.splice(i, 1);
-					break;
-				}
-			}
-		}
-
-		return filtered;
-	}
-
-	private isContained(rect1: Rectangle, rect2: Rectangle): boolean {
-		return (
-			rect1.x >= rect2.x &&
-			rect1.y >= rect2.y &&
-			rect1.x + rect1.width <= rect2.x + rect2.width &&
-			rect1.y + rect1.height <= rect2.y + rect2.height
-		);
-	}
-
-	private isIntersecting(rect1: Rectangle, rect2: Rectangle): boolean {
-		return !(
-			rect1.x >= rect2.x + rect2.width ||
-			rect1.x + rect1.width <= rect2.x ||
-			rect1.y >= rect2.y + rect2.height ||
-			rect1.y + rect1.height <= rect2.y
-		);
 	}
 
 	private handleResize = () => {
@@ -943,7 +841,7 @@ export default class MainScene extends Scene {
 		this.atlasHeight = data.atlasHeight;
 		this.atlasBoundary?.destroy();
 		this.drawAtlasBoundary();
-		this.initializeAtlas();
+		this.packer.resize(data.atlasWidth, data.atlasHeight);
 
 		// Recenter camera
 		this.centerPoint.set(this.atlasWidth / 2, this.atlasHeight / 2);
@@ -959,8 +857,8 @@ export default class MainScene extends Scene {
 					}
 					this.textures.addImage(asset.name, image);
 
-					// Mark the space as used in freeRects
-					this.splitFreeRectangles({
+					// Mark the space as used in the packer
+					this.packer.markUsed({
 						x: asset.x,
 						y: asset.y,
 						width: asset.width,
