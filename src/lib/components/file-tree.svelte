@@ -46,8 +46,8 @@
 	});
 </script>
 
-<div class="flex flex-col">
-	<ul class="menu menu-sm w-full max-w-xs flex-1 rounded-lg bg-base-200">
+<div class="flex min-w-0 flex-col">
+	<ul class="menu menu-sm w-full flex-1 overflow-hidden rounded-lg bg-base-200">
 		<li>
 			<details open>
 				<summary>
@@ -77,18 +77,18 @@
 						>
 							<a
 								aria-label={asset.name}
-								class="flex items-center justify-between"
+								class="flex min-w-0 items-center justify-between"
 								class:opacity-50={!loadedTextures.has(asset.name)}
 								class:text-error={fileState.failed.has(asset.name)}
 							>
-								<span class="flex items-center gap-1">
+								<span class="flex min-w-0 items-center gap-1">
 									<iconify-icon
 										icon="material-symbols:image-outline"
 										width="1rem"
 										height="1rem"
 										class="h-4 w-4"
 									/>
-									<span class="max-w-[7rem] truncate">
+									<span class="truncate">
 										{asset.name}
 										{#if !loadedTextures.has(asset.name)}
 											<span class="text-xs">
