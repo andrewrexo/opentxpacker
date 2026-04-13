@@ -4,6 +4,8 @@
 
 	let loadedTextures = $state(new Set<string>());
 	let hoveredFile: string | null = $state(null);
+	let selectedFile: string | null = $state(null);
+	let assetListEl: HTMLUListElement;
 
 	const handleUploadResult = (result: { name: string; success: boolean }) => {
 		if (result.success) {
@@ -32,6 +34,20 @@
 	EventBus.on('uploadResult', handleUploadResult);
 	EventBus.on('hoverTextureCanvas', (name: string | null) => {
 		hoveredFile = name;
+	});
+	EventBus.on('selectSprite', (name: string) => {
+		selectedFile = name;
+		// Auto-scroll to the selected item
+		requestAnimationFrame(() => {
+			if (assetListEl) {
+				const el = assetListEl.querySelector(`[data-asset="${CSS.escape(name)}"]`);
+				el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			}
+		});
+		// Clear selection after a few seconds
+		setTimeout(() => {
+			if (selectedFile === name) selectedFile = null;
+		}, 3000);
 	});
 
 	EventBus.on('manifestData', (json: string) => {
@@ -67,11 +83,13 @@
 					</svg>
 					assets
 				</summary>
-				<ul class="menu-content max-h-[calc(100vh-33rem)] overflow-y-auto">
+				<ul class="menu-content max-h-[calc(100vh-33rem)] overflow-y-auto" bind:this={assetListEl}>
 					{#each fileState.assets as asset}
 						<li
-							class="group hover:bg-neutral-focus text-right hover:rounded-lg"
+							data-asset={asset.name}
+							class="group hover:bg-neutral-focus text-right hover:rounded-lg transition-colors duration-200"
 							class:highlighted={hoveredFile === asset.name}
+							class:selected={selectedFile === asset.name}
 							onmouseenter={() => handleMouseEnter(asset.name)}
 							onmouseleave={() => handleMouseLeave()}
 						>
@@ -133,5 +151,9 @@
 
 	.highlighted {
 		@apply rounded-lg bg-neutral-content bg-opacity-10;
+	}
+
+	.selected {
+		@apply rounded-lg bg-primary bg-opacity-20 ring-1 ring-primary;
 	}
 </style>
