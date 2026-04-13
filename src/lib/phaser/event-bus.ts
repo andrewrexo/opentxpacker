@@ -38,6 +38,7 @@ type EventMap = {
 	resizeAtlas: (size: { width: number; height: number }) => void;
 	setPadding: (padding: number) => void;
 	removeSprite: (name: string) => void;
+	setTrimEnabled: (enabled: boolean) => void;
 };
 
 type EventTypes = keyof EventMap;

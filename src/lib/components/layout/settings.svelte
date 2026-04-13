@@ -7,6 +7,7 @@
 	let textureFormat = $state('PNG-32');
 	let atlasSize = $state('1024x1024');
 	let spritePadding = $state('0');
+	let trimTransparency = $state(false);
 
 	const exportOptions = ['Phaser 3', 'Multiatlas', 'JSON'];
 	const textureOptions = ['PNG-32', 'PNG-8', 'WebP'];
@@ -20,6 +21,10 @@
 
 	const handlePaddingChange = () => {
 		eventBus.emit('setPadding', parseInt(spritePadding));
+	};
+
+	const handleTrimChange = () => {
+		eventBus.emit('setTrimEnabled', trimTransparency);
 	};
 
 	const handleExport = () => {
@@ -38,6 +43,15 @@
 	<div class="grid grid-cols-1 gap-2 pb-4">
 		<Select label="Atlas Size" options={atlasSizeOptions} bind:value={atlasSize} onchange={handleAtlasSizeChange} />
 		<Select label="Padding" options={paddingOptions} bind:value={spritePadding} onchange={handlePaddingChange} />
+		<label class="label cursor-pointer justify-start gap-3 px-0">
+			<input
+				type="checkbox"
+				class="toggle toggle-sm toggle-primary"
+				bind:checked={trimTransparency}
+				onchange={handleTrimChange}
+			/>
+			<span class="label-text text-sm font-bold">Trim Transparency</span>
+		</label>
 		<Select label="Texture Type" options={exportOptions} bind:value={exportFormat} />
 		<Select label="File Format" options={textureOptions} bind:value={textureFormat} />
 	</div>
