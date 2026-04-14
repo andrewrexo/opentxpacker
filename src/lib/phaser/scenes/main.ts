@@ -573,13 +573,14 @@ export default class MainScene extends Scene {
 	};
 
 	private calculateOptimalZoom(containerWidth: number, containerHeight: number): number {
+		const margin = 80; // px margin around atlas in screen space
 		const totalWidth = this.getTotalWidth();
-		const zoomX = containerWidth / totalWidth;
-		const zoomY = containerHeight / this.atlasHeight;
+		const zoomX = (containerWidth - margin * 2) / totalWidth;
+		const zoomY = (containerHeight - margin * 2) / this.atlasHeight;
 		const idealZoom = Math.min(zoomX, zoomY);
 
-		const zoomLevels = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
-		const optimalZoom = zoomLevels.reverse().find((zoom) => zoom <= idealZoom) ?? 0.25;
+		const zoomLevels = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.5, 2, 3, 4];
+		const optimalZoom = zoomLevels.reverse().find((zoom) => zoom <= idealZoom) ?? 0.1;
 
 		EventBus.emit('adjustZoom', optimalZoom * 100);
 
