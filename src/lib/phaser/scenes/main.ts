@@ -579,7 +579,7 @@ export default class MainScene extends Scene {
 		const zoomY = (containerHeight - margin * 2) / this.atlasHeight;
 		const idealZoom = Math.min(zoomX, zoomY);
 
-		const zoomLevels = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.5, 2, 3, 4];
+		const zoomLevels = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
 		const optimalZoom = zoomLevels.reverse().find((zoom) => zoom <= idealZoom) ?? 0.1;
 
 		EventBus.emit('adjustZoom', optimalZoom * 100);
