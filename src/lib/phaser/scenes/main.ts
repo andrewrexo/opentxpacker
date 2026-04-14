@@ -573,10 +573,9 @@ export default class MainScene extends Scene {
 	};
 
 	private calculateOptimalZoom(containerWidth: number, containerHeight: number): number {
-		const margin = 80; // px margin around atlas in screen space
 		const totalWidth = this.getTotalWidth();
-		const zoomX = (containerWidth - margin * 2) / totalWidth;
-		const zoomY = (containerHeight - margin * 2) / this.atlasHeight;
+		const zoomX = containerWidth / totalWidth;
+		const zoomY = containerHeight / this.atlasHeight;
 		const idealZoom = Math.min(zoomX, zoomY);
 
 		const zoomLevels = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4];
@@ -923,19 +922,13 @@ export default class MainScene extends Scene {
 
 	resize() {
 		const { width, height } = this.scale;
-		const totalWidth = this.getTotalWidth();
 
 		const zoom = this.calculateOptimalZoom(width, height);
 		this.cameras.main.setZoom(zoom);
 
-		// Center the atlas in the viewport
-		// scrollX/Y positions the top-left of the camera view in world space
-		const viewWidth = width / zoom;
-		const viewHeight = height / zoom;
-		this.cameras.main.setScroll(
-			(totalWidth - viewWidth) / 2,
-			(this.atlasHeight - viewHeight) / 2
-		);
+		// Center the camera on the middle of the atlas
+		const totalWidth = this.getTotalWidth();
+		this.cameras.main.centerOn(totalWidth / 2, this.atlasHeight / 2);
 	}
 
 	update() {
