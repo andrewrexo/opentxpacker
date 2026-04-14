@@ -370,6 +370,7 @@ export default class MainScene extends Scene {
 				this.clearAllPages();
 				this.addPage();
 				this.repackAllSprites();
+				this.resize();
 				EventBus.emit('atlasSizeChanged', `${size}x${size}`);
 				return;
 			}
@@ -383,6 +384,7 @@ export default class MainScene extends Scene {
 		this.clearAllPages();
 		this.addPage();
 		this.repackAllSprites();
+		this.resize();
 		EventBus.emit('atlasSizeChanged', `${max}x${max}`);
 	}
 
@@ -421,6 +423,7 @@ export default class MainScene extends Scene {
 		this.clearAllPages();
 		this.addPage();
 		this.repackAllSprites();
+		this.resize();
 	}
 
 	private centerLogo() {
