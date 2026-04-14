@@ -922,18 +922,18 @@ export default class MainScene extends Scene {
 
 	resize() {
 		const { width, height } = this.scale;
-		const padding = 50;
 		const totalWidth = this.getTotalWidth();
 
 		const zoom = this.calculateOptimalZoom(width, height);
 		this.cameras.main.setZoom(zoom);
 
-		const centerX = (width / zoom - totalWidth) / 2;
-		const centerY = (height / zoom - this.atlasHeight) / 2;
-
+		// Center the atlas in the viewport
+		// scrollX/Y positions the top-left of the camera view in world space
+		const viewWidth = width / zoom;
+		const viewHeight = height / zoom;
 		this.cameras.main.setScroll(
-			Math.min(-padding, centerX - padding),
-			Math.min(-padding, centerY - padding)
+			(totalWidth - viewWidth) / 2,
+			(this.atlasHeight - viewHeight) / 2
 		);
 	}
 
