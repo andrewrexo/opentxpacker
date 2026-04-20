@@ -1,0 +1,31 @@
+services:
+  opentxpacker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opentxpacker
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3000
+    restart: unless-stopped
+    networks:
+      - cloudflare-network
+    # No ports exposed - only accessible via Cloudflare Tunnel
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    restart: unless-stopped
+    networks:
+      - cloudflare-network
+    depends_on:
+      - opentxpacker
+
+networks:
+  cloudflare-network:
+    driver: bridge
+    internal: false  # Must be false to allow cloudflared to reach Cloudflare's servers
